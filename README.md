@@ -15,7 +15,7 @@ source with a SANE backend usable from simple-scan, xsane, `scanimage`, etc.
 With `app-eselect/eselect-repository`:
 
 ```sh
-eselect repository add epsonscan2 git https://github.com/<user>/<repo>.git
+eselect repository add epsonscan2 git https://github.com/tiagotarifa/ebuilds.git
 emaint sync -r epsonscan2
 ```
 
