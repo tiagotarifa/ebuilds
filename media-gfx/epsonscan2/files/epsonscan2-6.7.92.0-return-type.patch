@@ -1,0 +1,50 @@
+Fix functions that fall off the end without returning a value
+(undefined behaviour, -Wreturn-type).
+
+diff --git a/src/Standalone/detectionareamindoublespinbox.cpp b/src/Standalone/detectionareamindoublespinbox.cpp
+index 4ec5c91..13cb8aa 100644
+--- a/src/Standalone/detectionareamindoublespinbox.cpp
++++ b/src/Standalone/detectionareamindoublespinbox.cpp
+@@ -91,11 +91,7 @@ bool DetectionAreaMinDoubleSpinBox::isUnit_inchi(void)
+     Configuration& config = Configuration::GetConfiguration();
+     Units units = config.config_para.units;
+ 
+-    if(units == unit_inchi){
+-        return true;
+-    }else if(units == unit_mm){
+-        return false;
+-    }
++    return units == unit_inchi;
+ }
+ 
+ void DetectionAreaMinDoubleSpinBox::setMaxValue(double value)
+diff --git a/src/Standalone/lengthdoublespinbox.cpp b/src/Standalone/lengthdoublespinbox.cpp
+index 9340206..23b29f6 100644
+--- a/src/Standalone/lengthdoublespinbox.cpp
++++ b/src/Standalone/lengthdoublespinbox.cpp
+@@ -127,9 +127,5 @@ bool LengthDoubleSpinBox::isUnit_inchi(void)
+     Configuration& config = Configuration::GetConfiguration();
+     Units units = config.config_para.units;
+ 
+-    if(units == unit_inchi){
+-        return true;
+-    }else if(units == unit_mm){
+-        return false;
+-    }
++    return units == unit_inchi;
+ }
+diff --git a/src/Standalone/widthdoublespinbox.cpp b/src/Standalone/widthdoublespinbox.cpp
+index 1727b8f..a6ac497 100644
+--- a/src/Standalone/widthdoublespinbox.cpp
++++ b/src/Standalone/widthdoublespinbox.cpp
+@@ -110,9 +110,5 @@ bool WidthDoubleSpinBox::isUnit_inchi(void)
+     Configuration& config = Configuration::GetConfiguration();
+     Units units = config.config_para.units;
+ 
+-    if(units == unit_inchi){
+-        return true;
+-    }else if(units == unit_mm){
+-        return false;
+-    }
++    return units == unit_inchi;
+ }

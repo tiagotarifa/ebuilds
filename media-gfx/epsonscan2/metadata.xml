@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>tiagotarifa@gmail.com</email>
+		<name>Tiago Tarifa Munhoz</name>
+	</maintainer>
+	<longdescription lang="en">
+		Epson Scan 2 is Linux software for Epson scanners and multifunction
+		printers. It provides a SANE backend (epsonscan2) usable from any SANE
+		frontend such as simple-scan, and an optional Qt graphical front-end.
+		This package does not install the proprietary non-free plugins.
+	</longdescription>
+	<use>
+		<flag name="gui">Build the Qt6 graphical front-end (epsonscan2 and detectalert); without it only the SANE driver is installed</flag>
+		<flag name="wifi">Support network (Wi-Fi/Ethernet) scanners through the proprietary <pkg>media-gfx/epsonscan2-non-free-plugin</pkg> and <pkg>net-dns/avahi</pkg> discovery</flag>
+	</use>
+</pkgmetadata>

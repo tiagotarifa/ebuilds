@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>tiagotarifa@gmail.com</email>
+		<name>Tiago Tarifa Munhoz</name>
+	</maintainer>
+	<longdescription lang="en">
+		Proprietary, binary-only plugins for Epson Scan 2. They provide the
+		network interface (es2netif) used to scan over Wi-Fi/Ethernet, the
+		USB interpreter (es2intif) required by some models, and image
+		processing plugins. Normally installed via media-gfx/epsonscan2[wifi].
+	</longdescription>
+</pkgmetadata>

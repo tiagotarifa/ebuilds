@@ -1,0 +1,35 @@
+udev: grant access to the 'scanner' group and the active seat (uaccess)
+instead of making every Epson scanner world-writable (MODE=0666).
+desktop: drop deprecated keys/categories and use an icon name.
+
+diff --git a/desktop/rpm/x86_64/epsonscan2.desktop b/desktop/rpm/x86_64/epsonscan2.desktop
+index a3102d8..216c864 100644
+--- a/desktop/rpm/x86_64/epsonscan2.desktop
++++ b/desktop/rpm/x86_64/epsonscan2.desktop
+@@ -1,11 +1,10 @@
+ [Desktop Entry]
+-Encoding=UTF-8
+ Type=Application
+-Categories=Application;Graphics;RasterGraphics;Scanning;GTK;
++Categories=Graphics;Scanning;Qt;
+ 
+ Name=Epson Scan 2
+ GenericName=Epson Scan 2
+ 
+ Exec=/usr/bin/epsonscan2
+ Terminal=false
+-Icon=/usr/lib64/epsonscan2/Resources/Icons/escan2_app.png
++Icon=epsonscan2
+diff --git a/epsonscan2.rules b/epsonscan2.rules
+index dc5c4e6..b632c17 100644
+--- a/epsonscan2.rules
++++ b/epsonscan2.rules
+@@ -412,7 +412,7 @@ ATTRS{idProduct}=="1415", ENV{epsonscan2_driver}="esci"
+ 
+ 
+ #  Give scanner users read/write permissions on the device.
+-ENV{epsonscan2_driver}=="esci*", MODE="0666", OWNER="root", GROUP="root"
++ENV{epsonscan2_driver}=="esci*", MODE="0660", GROUP="scanner", TAG+="uaccess"
+ 
+ #  Device detection by libepsonscan2 depends on libsane_matched being set.
+ ENV{epsonscan2_driver}=="esci*", ENV{libsane_matched}="yes"
