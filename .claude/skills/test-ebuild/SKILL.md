@@ -55,8 +55,8 @@ sed 's/\x1b\[[0-9;]*m//g' "$EBUILD_TEST_DIR/<pkg>-<flags>.log" | grep -A6 "QA No
 `emerge` always asks for permission (see `.claude/settings.json`); only ever run it with `-p`.
 
 ```sh
-portageq metadata / ebuild media-gfx/<pkg>-<ver>::epsonscan2 IUSE RDEPEND PDEPEND
-ACCEPT_KEYWORDS="~amd64" ACCEPT_LICENSE="*" USE="<flags>" emerge -pv media-gfx/<pkg>::epsonscan2
+portageq metadata / ebuild media-gfx/<pkg>-<ver>::tiagotarifa IUSE RDEPEND PDEPEND
+ACCEPT_KEYWORDS="~amd64" ACCEPT_LICENSE="*" USE="<flags>" emerge -pv media-gfx/<pkg>::tiagotarifa
 ```
 
 ## 4. Dependencies that aren't installed

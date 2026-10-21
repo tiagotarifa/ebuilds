@@ -1,4 +1,4 @@
-# epsonscan2 Gentoo overlay
+# tiagotarifa Gentoo overlay
 
 Gentoo overlay for **Epson Scan 2**, the Epson scanner driver for Linux, built from
 source with a SANE backend usable from simple-scan, xsane, `scanimage`, etc.
@@ -19,13 +19,13 @@ eselect repository add tiagotarifa git https://github.com/tiagotarifa/ebuilds.gi
 emaint sync -r tiagotarifa
 ```
 
-Or manually, in `/etc/portage/repos.conf/epsonscan2.conf`:
+Or manually, in `/etc/portage/repos.conf/tiagotarifa.conf`:
 
 ```ini
-[epsonscan2]
-location = /var/db/repos/epsonscan2
+[tiagotarifa]
+location = /var/db/repos/tiagotarifa
 sync-type = git
-sync-uri = https://github.com/<user>/<repo>.git
+sync-uri = https://github.com/tiagotarifa/ebuilds.git
 auto-sync = yes
 ```
 

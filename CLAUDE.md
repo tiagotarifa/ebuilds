@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Gentoo overlay (repo name `epsonscan2`) for Epson Scan 2. Public repository: see
+Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2. Public repository: see
 [Privacy](#privacy) before committing anything.
 
 ## Layout
