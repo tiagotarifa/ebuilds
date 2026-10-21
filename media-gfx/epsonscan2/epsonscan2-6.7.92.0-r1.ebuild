@@ -54,6 +54,7 @@ PATCHES=(
 	"${FILESDIR}"/${P}-Fix-folder-creation-crash.patch
 	"${FILESDIR}"/${P}-qt6.patch
 	"${FILESDIR}"/${P}-return-type.patch
+	"${FILESDIR}"/${P}-per-user-workdir.patch
 )
 
 pkg_nofetch() {

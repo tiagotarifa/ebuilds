@@ -94,3 +94,4 @@ CMake 4, Boost 1.90). Patches in [`files/`](files/):
 | `Fix-*`, `Use-XDG-open-*` | crash fixes by Hubert Figuière (via the slonko overlay) |
 | `qt6` | GUI port from Qt5 to Qt6 |
 | `return-type` | fix undefined behaviour (missing return values) in the GUI |
+| `per-user-workdir` | private temporary folder per process (upstream's shared `/tmp/epsonWork` made scanning crash for every user but the first) and no crash when it can't be created |

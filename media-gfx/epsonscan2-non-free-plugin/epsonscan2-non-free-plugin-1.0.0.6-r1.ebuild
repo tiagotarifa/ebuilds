@@ -8,7 +8,7 @@
 EAPI=8
 
 RPM_COMPRESS_TYPE="xz"
-inherit rpm
+inherit rpm tmpfiles
 
 BUNDLE="epsonscan2-bundle-6.7.80.0.x86_64.rpm"
 
@@ -50,9 +50,13 @@ src_install() {
 	rm -r "${ED}"/usr/share/doc || die
 
 	dodoc usr/share/doc/${P}-1/{NEWS,copyright}
+
+	newtmpfiles "${FILESDIR}"/${PN}.conf ${PN}.conf
 }
 
 pkg_postinst() {
+	tmpfiles_process ${PN}.conf
+
 	elog "Network scanners are used through media-gfx/epsonscan2[wifi]."
 	elog "See 'scanimage -L' or simple-scan."
 }

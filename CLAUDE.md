@@ -37,6 +37,14 @@ Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2. Public repository: se
 - Network discovery runs `avahi-browse -r -p -t _scanner._tcp` (`NetFinder.cpp`); manual IPs
   are read from `~/.epsonscan2/Network/epsonscan2.conf` (`[Network]`, one IP per line).
 - Debug logging (`CommonUtility/DbgLog.cpp`) is enabled only when `/tmp/epson` exists.
+- The prebuilt `es2netif` always appends to `/tmp/test.txt` and segfaults when `fopen`
+  fails (file owned by another user, `fs.protected_regular`); the plugin's `tmpfiles.d`
+  entry creates it 0666 as root.
+- `/tmp/epsonWork/interrupt.dat` is the `ftok` key of the IPC between `es2netif` and
+  `ipcInterfaceImpl.cpp`: keep that path. Temporary images no longer go there: the
+  `per-user-workdir` patch makes `ES_GetWorkTempPath()` return a `mkdtemp()` folder.
+- Upstream sources use CRLF line endings in many files; patches keep them, so edit them with
+  tools that preserve `\r`.
 - SANE's dll backend needs `/usr/lib*/sane/libsane-epsonscan2.so.1` symlinks (`dosym`).
 
 ## Testing

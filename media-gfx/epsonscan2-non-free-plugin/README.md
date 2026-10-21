@@ -50,6 +50,18 @@ them. Only amd64 is supported.
 See the [epsonscan2 README](../epsonscan2/README.md#network-scanners-usewifi) for network
 scanner discovery and manual IP configuration.
 
+## Files in `/tmp`
+
+`es2netif` has two hardcoded paths in `/tmp` that must be usable by every user, or network
+scanning breaks for all users but the one who scanned first:
+
+- it appends a debug log to `/tmp/test.txt` and crashes if it can't open it;
+- it shares `/tmp/epsonWork/interrupt.dat` with `media-gfx/epsonscan2` for IPC.
+
+The package installs `/usr/lib/tmpfiles.d/epsonscan2-non-free-plugin.conf`, which creates
+`/tmp/test.txt` (mode 0666) and `/tmp/epsonWork` (mode 1777) owned by root at boot and on
+installation. The log is readable by all users; it only holds protocol debug messages.
+
 ## Runtime dependencies
 
 `dev-libs/libltdl`, `virtual/libusb:1` and `media-gfx/epsonscan2`.

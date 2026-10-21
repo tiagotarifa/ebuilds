@@ -31,7 +31,7 @@ _portage_user_env() {
 main-repo = gentoo
 [gentoo]
 location = ${gentoo}
-[epsonscan2]
+[tiagotarifa]
 location = ${repo}
 "
 	# The sandboxes and privilege dropping need root; distlocks would write into DISTDIR.
