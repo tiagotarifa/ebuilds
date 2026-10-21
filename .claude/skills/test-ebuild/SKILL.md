@@ -14,8 +14,9 @@ writes only to `.work/` inside the repository (git-ignored).
 source .claude/skills/test-ebuild/scripts/portage-user-env.sh
 ```
 
-It sets `PORTAGE_TMPDIR`, `DISTDIR` (copied from `fontes/`), `PORTAGE_REPOSITORIES` and
-disables the root-only sandbox features. Source it in the same shell command as the
+It sets `PORTAGE_TMPDIR`, `DISTDIR` (pointing at `fontes/`, read-only use),
+`PORTAGE_REPOSITORIES` and disables the root-only features. It must be sourced, not
+executed (executing it fails on purpose). Source it in the same shell command as the
 `ebuild` calls, since shell state does not persist between tool calls.
 
 If a distfile is missing from `fontes/`, stop and ask the user to download it with a
@@ -28,8 +29,13 @@ For each USE combination that matters (epsonscan2: `-gui -wifi`, `gui`, `wifi`):
 ```sh
 cd media-gfx/<pkg>
 USE="<flags>" CFLAGS="-O3 -march=native -pipe" CXXFLAGS="-O3 -march=native -pipe" \
-	ebuild <pkg>-<ver>.ebuild manifest clean install > "$EBUILD_TEST_DIR/<pkg>-<flags>.log" 2>&1
+	ebuild <pkg>-<ver>.ebuild clean install > "$EBUILD_TEST_DIR/<pkg>-<flags>.log" 2>&1
 ```
+
+Do not run `ebuild … manifest` here: the fetch phase must verify the distfile against the
+committed Manifest. A digest mismatch means the distfile in `fontes/` differs from the one
+the Manifest was made from — report it instead of regenerating the Manifest. Only
+`bump-epsonscan2` (a deliberate version or distfile change) regenerates Manifests.
 
 Then inspect, stripping colour codes:
 
@@ -45,6 +51,8 @@ sed 's/\x1b\[[0-9;]*m//g' "$EBUILD_TEST_DIR/<pkg>-<flags>.log" | grep -A6 "QA No
   `readelf -d` (NEEDED, RUNPATH = `/usr/lib64/epsonscan2/`) on the libraries.
 
 ## 3. Check metadata and dependency resolution
+
+`emerge` always asks for permission (see `.claude/settings.json`); only ever run it with `-p`.
 
 ```sh
 portageq metadata / ebuild media-gfx/<pkg>-<ver>::epsonscan2 IUSE RDEPEND PDEPEND

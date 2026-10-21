@@ -7,28 +7,24 @@
       "Bash(git log:*)",
       "Bash(git show:*)",
       "Bash(git grep:*)",
-      "Bash(ebuild:*)",
       "Bash(portageq:*)",
-      "Bash(emerge -p:*)",
-      "Bash(emerge --pretend:*)",
       "Bash(readelf:*)",
       "Bash(tar -t:*)",
       "Bash(tar -tzf:*)",
       "Bash(bsdtar -t:*)",
-      "Bash(cmake:*)",
-      "Bash(ninja:*)",
       "Bash(scanimage -L:*)"
     ],
     "ask": [
       "Bash(git push:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(emerge:*)"
     ],
     "deny": [
       "Bash(sudo:*)",
       "Bash(su:*)",
       "Bash(doas:*)",
-      "Bash(emerge -a:*)",
-      "Bash(emerge --ask:*)",
+      "Bash(pkexec:*)",
+      "Bash(run0:*)",
       "Bash(eselect:*)"
     ]
   }

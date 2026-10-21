@@ -42,15 +42,23 @@ Gentoo overlay (repo name `epsonscan2`) for Epson Scan 2. Public repository: see
 ## Testing
 
 Use the `test-ebuild` skill: it runs `ebuild … clean install` as a normal user with a
-private `PORTAGE_TMPDIR`/`DISTDIR` under `.work/` (git-ignored). Test every USE
+private `PORTAGE_TMPDIR` under `.work/` (git-ignored) and `DISTDIR=fontes/`. Test every USE
 combination and check QA notices. Never use `sudo`/`su`/root and never run a real
-`emerge` (only `emerge -p`); installing is left to the user.
+`emerge` (only `emerge -p`, which asks for permission); installing is left to the user.
 
 ## Privacy
 
-This repository is published. Never commit local paths, hostnames, IP addresses, scanner
-models, user names or e-mail addresses other than the maintainer's public one in
-`metadata.xml`. Use generic examples such as `192.168.0.10`. Machine-specific notes go in
+This repository is published. Never commit data about the maintainer's machine, network or
+employer:
+- local paths;
+- hostnames, IP addresses or the test scanner's model;
+- local user names;
+- personal or work e-mail addresses.
+
+Use generic examples such as `192.168.0.10`. The following public identities are allowed:
+- the maintainer's address in `metadata.xml` and the git author;
+- the authors credited in upstream/third-party patches;
+- the `Co-Authored-By` trailer. Machine-specific notes go in
 `CLAUDE.local.md` (git-ignored). Commits use the repository's local `user.email`; check it
 with `git config --local user.email` before committing.
 

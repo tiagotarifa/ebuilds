@@ -45,23 +45,34 @@ Work in a scratch directory outside the repository (or under `.work/`), never in
    ninja -C ../build-nogui -k 0
    ```
 
-   Repeat with `-DBUILD_GUI=ON`. New errors become new commits: put them in the matching
-   patch, or add a new `${P}-<topic>.patch`. Also grep the output for `-Wreturn-type` and
-   other severe warnings.
+   Repeat in a separate, fresh build directory (`../build-gui`) with `-DBUILD_GUI=ON`;
+   never reconfigure `../build-nogui`. New errors become new commits: put them in the
+   matching patch, or add a new `${P}-<topic>.patch`. Also grep the output for
+   `-Wreturn-type` and other severe warnings.
 
-5. **Regenerate each patch** with its header paragraph:
+5. **Regenerate each patch.** Write the header from scratch: a short paragraph saying
+   why the patch exists, plus the original author/credit line for upstream or third-party
+   fixes. Do not cut the header out of the old patch, because:
+   - some old patches have no `diff --git` line (plain `---`/`+++` diffs);
+   - `git format-patch` ones carry stale `From`/`Subject`/diffstat blocks.
 
    ```sh
-   { sed '/^diff --git/,$d' old.patch; git diff --no-color t_<prev> t_<topic> -- . ':!<removed dirs>'; } > new.patch
+   { cat header.txt; echo; git diff --no-color t_<prev> t_<topic> -- . ':!<removed dirs>'; } > new.patch
    ```
 
-   Exclude directories that `src_prepare` removes, otherwise `eapply` fails on them.
+   - Exclude directories that `src_prepare` removes, otherwise `eapply` fails on them.
+   - If the diff is empty because upstream fixed it, drop the patch instead of keeping a
+     header-only file.
 
-6. **Write the new ebuild**: `git mv` the ebuild and the patches to the new `${P}`, update
-   `PATCHES`, regenerate the Manifest with `ebuild … manifest`, and remove the old version
-   once the new one passes.
+6. **Write the new ebuild next to the old one.** `git cp` does not exist, so `cp` the ebuild
+   to the new `${P}`, write the regenerated patches under the new names and update
+   `PATCHES`. Then regenerate the Manifest with `ebuild <new>.ebuild manifest`. Keep the old
+   ebuild and its patches until step 7 passes, so there is something to compare against
+   and fall back to.
 
-7. **Run the `test-ebuild` skill** for `-gui -wifi`, `gui` and `wifi`.
+7. **Run the `test-ebuild` skill** for `-gui -wifi`, `gui` and `wifi` on the new ebuild.
+   Only after it passes, `git rm` the old ebuild and its old patches, and regenerate the
+   Manifest once more so it drops the old DIST line.
 
 8. **Update the docs**: the patch table and version numbers in
    `media-gfx/epsonscan2/README.md` and the root `README.md`.
