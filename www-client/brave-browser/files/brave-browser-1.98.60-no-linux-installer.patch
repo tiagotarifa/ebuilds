@@ -1,0 +1,19 @@
+Don't pull Chromium's .deb/.rpm packaging into the GN graph.
+
+brave's create_dist group depends on //chrome/installer/linux, whose
+dependency calculation needs a Debian sysroot; Gentoo builds with
+use_sysroot=false and installs the files itself, so GN fails on the empty
+sysroot path while loading the graph.
+
+diff --git a/brave/BUILD.gn b/brave/BUILD.gn
+index d23c30c..acb7e82 100644
+--- a/brave/BUILD.gn
++++ b/brave/BUILD.gn
+@@ -505,7 +505,6 @@ group("create_dist") {
+     deps += [
+       ":theme_files",
+       "//brave/app/linux:dist_resources",
+-      "//chrome/installer/linux:$linux_channel",
+     ]
+   }
+ }

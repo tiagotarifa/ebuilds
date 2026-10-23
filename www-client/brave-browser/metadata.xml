@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>tiagotarifa@gmail.com</email>
+		<name>Tiago Tarifa Munhoz</name>
+	</maintainer>
+	<longdescription lang="en">
+		Brave is a privacy-focused web browser based on Chromium, with a built-in
+		ad and tracker blocker (Shields). This package builds it from source
+		(brave-core plus Chromium) and lets each of Brave's optional features be
+		left out at build time.
+	</longdescription>
+	<use>
+		<flag name="ads">Build Brave Ads (privacy-preserving ads that pay Basic Attention Tokens)</flag>
+		<flag name="ai-chat">Build Leo, Brave's AI assistant</flag>
+		<flag name="chromedriver">Build and install chromedriver (as brave-chromedriver) for WebDriver automation</flag>
+		<flag name="custom-cflags">Build with the user's CFLAGS/LDFLAGS (e.g. -O3 -march=native) through the unbundle toolchain instead of upstream's tuned ones. Code built for a specific CPU level and selected at runtime keeps its own -march; Rust code is not affected. Unsupported</flag>
+		<flag name="education">Build the onboarding/education pages that introduce Brave's features</flag>
+		<flag name="gtk4">Build with GTK4 headers (GTK4 file dialogs and theming)</flag>
+		<flag name="hangouts">Enable support for Google Hangouts features such as screen sharing</flag>
+		<flag name="news">Build Brave News, the news feed on the New Tab Page</flag>
+		<flag name="official">Official build: ThinLTO, CFI and upstream's release optimisations. Slower to build and needs more memory</flag>
+		<flag name="origin">Brave Origin branding: a stripped-down Brave without the Web3, rewards, ads, news, AI and Tor features</flag>
+		<flag name="page-graph">Build PageGraph, Brave's research instrumentation of page loads</flag>
+		<flag name="playlist">Build Playlist, to save audio/video for later or offline playback</flag>
+		<flag name="proprietary-codecs">Enable proprietary codecs like H.264, H.265 (HEVC) and AAC</flag>
+		<flag name="psst">Build PSST (Privacy Settings Selection Tool), which helps tighten privacy settings on websites</flag>
+		<flag name="qt6">Add Qt6 support (shim library loaded at runtime) for native Qt look and file dialogs</flag>
+		<flag name="rar">Inspect RAR downloads with Safe Browsing using the non-free unRAR code</flag>
+		<flag name="rewards">Build Brave Rewards (Basic Attention Token wallet for creators); needs ads</flag>
+		<flag name="screencast">Enable support for remote desktop and screen cast using <pkg>media-video/pipewire</pkg></flag>
+		<flag name="speedreader">Build Speedreader, a reader mode that strips pages down to their text</flag>
+		<flag name="system-harfbuzz">Use the system <pkg>media-libs/harfbuzz</pkg> instead of the bundled one</flag>
+		<flag name="system-zstd">Use the system <pkg>app-arch/zstd</pkg> instead of the bundled one</flag>
+		<flag name="talk">Build Brave Talk integration (private video calls)</flag>
+		<flag name="tor">Build private windows with Tor</flag>
+		<flag name="traffic-control">Build per-container traffic control</flag>
+		<flag name="vaapi">Enable hardware-accelerated video decoding and encoding with <pkg>media-libs/libva</pkg></flag>
+		<flag name="wallet">Build Brave Wallet (crypto wallet, Web3 and Snaps support)</flag>
+		<flag name="wayback">Offer the Wayback Machine (Internet Archive) on "page not found" errors</flag>
+		<flag name="web-discovery">Build the Web Discovery Project, opt-in contribution of anonymous search data to Brave Search</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">brave/brave-core</remote-id>
+		<bugs-to>https://github.com/brave/brave-browser/issues</bugs-to>
+	</upstream>
+</pkgmetadata>

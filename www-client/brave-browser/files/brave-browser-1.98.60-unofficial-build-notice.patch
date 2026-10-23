@@ -1,0 +1,35 @@
+Say on the About page (brave://settings/help) that this is an unofficial build.
+
+It is compiled from source by a Gentoo overlay, not distributed by Brave
+Software; the notice goes below the Brave and Chromium versions.
+
+diff --git a/brave/browser/resources/settings/br/about_page.ts b/brave/browser/resources/settings/br/about_page.ts
+index 40a800a..b1f9999 100644
+--- a/brave/browser/resources/settings/br/about_page.ts
++++ b/brave/browser/resources/settings/br/about_page.ts
+@@ -43,6 +43,17 @@ const buildChromiumVersionElement = (chromiumVersion: string) => {
+   return chromiumElement
+ }
+ 
++// Gentoo: this is not one of Brave Software's builds
++const buildUnofficialBuildNotice = () => {
++  const notice = document.createElement('div')
++  notice.setAttribute('id', 'unofficial-build-notice')
++  notice.classList.add('secondary')
++  notice.textContent =
++    'Unofficial build compiled from source by the tiagotarifa Gentoo overlay.'
++
++  return notice
++}
++
+ const modifyAboutPage = (root: ShadowRoot) => {
+   if (!root.querySelector('a#release-notes')) {
+     const version =
+@@ -71,6 +82,7 @@ const modifyAboutPage = (root: ShadowRoot) => {
+ 
+     const chromiumVersionElement = buildChromiumVersionElement(chromiumVersion)
+     braveVersionLink.after(chromiumVersionElement)
++    chromiumVersionElement.after(buildUnofficialBuildNotice())
+   }
+ 
+   // Help link shown if update fails

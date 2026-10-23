@@ -1,0 +1,7 @@
+# Default settings for brave-browser. This file is sourced by /bin/bash from
+# the brave-browser launcher.
+
+# Options to pass to brave-browser. Per-user flags go in
+# ~/.config/brave-flags.conf; BRAVE_USER_FLAGS in the environment replaces
+# this variable.
+BRAVE_FLAGS=""

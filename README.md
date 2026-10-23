@@ -1,7 +1,11 @@
 # tiagotarifa Gentoo overlay
 
-Gentoo overlay for **Epson Scan 2**, the Epson scanner driver for Linux, built from
-source with a SANE backend usable from simple-scan, xsane, `scanimage`, etc.
+Gentoo overlay with:
+
+- **Epson Scan 2**, the Epson scanner driver for Linux, built from source with a SANE
+  backend usable from simple-scan, xsane, `scanimage`, etc.;
+- **Brave**, the privacy-focused web browser, built from source with its optional
+  features selectable through USE flags.
 
 ## Packages
 
@@ -9,6 +13,7 @@ source with a SANE backend usable from simple-scan, xsane, `scanimage`, etc.
 |---|---|
 | [`media-gfx/epsonscan2`](media-gfx/epsonscan2/README.md) | Epson Scan 2 built from source: SANE backend (driver-only build possible) and optional Qt6 front-end. Free software. |
 | [`media-gfx/epsonscan2-non-free-plugin`](media-gfx/epsonscan2-non-free-plugin/README.md) | Proprietary, binary-only Epson plugins (network scanning, some USB models, image processing). Optional, pulled in by `media-gfx/epsonscan2[wifi]`. |
+| [`www-client/brave-browser`](www-client/brave-browser/README.md) | Brave web browser (stable) built from source; the ebuild downloads the sources itself while building. |
 
 ## Adding the overlay
 
@@ -29,14 +34,19 @@ sync-uri = https://github.com/tiagotarifa/ebuilds.git
 auto-sync = yes
 ```
 
-Both packages are keyworded `~amd64` and their distfiles are fetch-restricted (Epson
-does not allow automated downloads); see each package's README for the details.
+All packages are keyworded `~amd64`. The Epson distfiles are fetch-restricted (Epson
+does not allow automated downloads); Brave's sources are downloaded during the build.
+See each package's README for the details.
 
 ## Credits
 
-The ebuilds are based on the ones in the
+The Epson Scan 2 ebuilds are based on the ones in the
 [slonko overlay](https://github.com/gringus/slonko) by Marcin Deranek. Several crash
 fixes are by Hubert Figuière.
 
 Epson Scan 2 is © SEIKO EPSON CORPORATION. The driver sources are licensed under
 LGPL-2.1+ (udev rules GPL-3+); the plugin is distributed under the EPSON license.
+
+The Brave ebuild is based on `www-client/chromium` from the Gentoo repository and on
+[another-brave-overlay](https://github.com/falbrechtskirchinger/another-brave-overlay)
+by Florian Albrechtskirchinger. Brave is © Brave Software, licensed under MPL-2.0.

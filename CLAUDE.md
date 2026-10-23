@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2. Public repository: see
+Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2 and Brave. Public repository: see
 [Privacy](#privacy) before committing anything.
 
 ## Layout
@@ -9,23 +9,28 @@ Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2. Public repository: se
   applied in the order of the `PATCHES` array.
 - `media-gfx/epsonscan2-non-free-plugin/` — Epson's binary plugin, unpacked from the RPM
   bundle with `rpm.eclass`.
+- `www-client/brave-browser/` — Brave built from source (brave-core + Chromium). `files/` has
+  the launcher, `/etc/brave-browser/default`, the support-file generator and patches.
 - `metadata/layout.conf` — `thin-manifests = true`: Manifests only hold `DIST` lines.
 - Each package has a `README.md` for end users; the root `README.md` links to them.
 - `fontes/` (git-ignored) holds the distfiles; they can't be committed or redistributed.
+  Never upload distfiles or sources that are already downloadable elsewhere (GitHub
+  releases included).
 
 ## Ebuild conventions
 
 - EAPI 8, `KEYWORDS="~amd64"` (plugin: `-* ~amd64`).
-- Both distfiles are `RESTRICT="fetch"`: Epson's CDN rejects automated downloads (HTTP 403),
+- Both Epson distfiles are `RESTRICT="fetch"`: Epson's CDN rejects automated downloads (HTTP 403),
   so `pkg_nofetch` explains the manual download.
 - Patch files are named `${P}-<topic>.patch` and start with a short paragraph explaining
   why. Generate them with `git diff` from a scratch git tree of the sources (see the
   `bump-epsonscan2` skill), never by hand.
-- USE flags: `gui` (Qt6 front-end; off → SANE driver only, no Qt) and `wifi` (default off;
+- epsonscan2 USE flags: `gui` (Qt6 front-end; off → SANE driver only, no Qt) and `wifi` (default off;
   `PDEPEND` on the proprietary plugin plus `net-dns/avahi[dbus]`). Without `wifi` everything
   installed must stay free software.
-- The build must respect user flags and work with `-O3 -march=native -pipe`; never re-add
-  hardcoded `-O`/`-std` flags.
+- The Epson builds must respect user flags and work with `-O3 -march=native -pipe`; never
+  re-add hardcoded `-O`/`-std` flags. Brave follows `www-client/chromium` instead: user
+  flags are filtered unless `USE=custom-cflags`.
 
 ## Upstream facts that are easy to miss
 
@@ -46,6 +51,54 @@ Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2. Public repository: se
 - Upstream sources use CRLF line endings in many files; patches keep them, so edit them with
   tools that preserve `\r`.
 - SANE's dll backend needs `/usr/lib*/sane/libsane-epsonscan2.so.1` symlinks (`dosym`).
+
+## Brave facts that are easy to miss
+
+- No source tarball exists and the user wants nothing stored: `src_unpack` runs brave-core's
+  `pnpm run init --no-history` (gclient). `PROPERTIES="live"` is what gives `src_unpack`
+  network access under `network-sandbox` (Portage `doebuild.py`, `_doebuild_spawn`); every
+  later phase must work offline. Only the pinned Node 24 tarball is in `SRC_URI`.
+- brave-core's `devEngines` demand Node 24 and pnpm ≥ 11.11 (hard failure otherwise); both
+  are pinned at the top of the ebuild (`NODE_VER`, `PNPM_VER`), with `CHROMIUM_VER` checked
+  against `brave/package.json`.
+- gclient runs `git reset --force` on the repository it finds at `src/`: keep
+  `GIT_CEILING_DIRECTORIES` set, or it climbs into an enclosing checkout (it once picked up
+  this overlay from `.work/`).
+- Brave patches `chrome/VERSION` to `156.<brave version>`; the Chromium version lives in
+  `brave/package.json` (`config.projects.chrome.tag`). `init` writes it before `src_prepare`
+  creates `.env`, and outside CI/release builds it zeroes the patch number, hence the
+  `ignore_patch_version_number=false` `.env` in `src_unpack`.
+- The channel comes from `CHROME_VERSION_EXTRA` (the launcher exports `stable`; unset means
+  "unknown"). Non-official builds append `-Development` to the profile directory.
+- Before `gn gen`, `pnpm run build` copies Brave's branding over Chromium's; the ebuild runs
+  `build.ts Release --prepare_only` for that, configured by `brave/.env`
+  (`is_brave_release_build=1` selects the release logos, `is_brave_origin_branded`).
+- GN args mirror `brave/build/commands/lib/buildArgs.ts`. Official builds assert that
+  `brave_services_key`, `service_key_search`, `service_key_stt` and `service_key_aichat` are
+  non-empty; they are private, so the ebuild uses `BRAVE_*` env vars or a placeholder.
+- Not optional despite having buildflags (referenced unconditionally): commander, containers,
+  custom NTP background, local AI, Request-OTR, Widevine (`brave.widevine_opted_in` is read
+  unguarded: `-widevine` builds crash at startup). VPN is Windows/Mac/Android only.
+  `system-icu` breaks (`icudata`/`copy_icudata` missing from the unbundle shim).
+- `brave/vendor/web-discovery-project/.git/HEAD` is a build input; keep it when deleting VCS
+  data.
+- Hidden network use during the build (masked by caches in a normal `$HOME`): wasm-pack's
+  `cargo metadata` (private `CARGO_HOME` with `offline` + vendored crates) and pnpm's
+  `packageManager` switch in web-discovery-project (`pnpm_config_pm_on_fail=ignore`).
+- Cargo builds C/C++ for Brave's wasm tools with `$CC`/`$CXX`: GCC at `-O3` breaks binaryen,
+  so the ebuild always exports upstream's clang. The unbundle toolchain appends `$CFLAGS`
+  after a target's own flags, so a user `-march` would override Skia's per-file
+  `-march=x86-64-v4`: with `custom-cflags`, `files/redirect-cc.py` (the GN `cc_wrapper`)
+  puts `-march`/`-mtune`/`-mcpu` right after the compiler instead.
+- A system LLVM/Rust toolchain fails at `gn gen` (Chromium 156 builds Rust std and crubit
+  bindings itself); there is no `system-toolchain` flag.
+- Telemetry is blocked by `${P}-disable-telemetry.patch`, which makes Brave Origin's
+  "telemetry off" branches (`IS_BRAVE_ORIGIN_BRANDED`) unconditional and hard-codes the
+  gates (`P3AService::IsP3AEnabled()`, the referral/SERP usage-ping checks, crash upload
+  URL); there is no `stats` flag. `${P}-unofficial-build-notice.patch` adds the
+  "Unofficial build" line to `brave://settings/help`. Rebase both on every bump.
+- Re-running later phases of an existing build dir reuses `temp/environment`: delete it (and
+  `.setuped`) for ebuild edits to take effect.
 
 ## Testing
 
