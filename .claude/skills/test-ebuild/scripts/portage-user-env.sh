@@ -4,7 +4,8 @@
 #   source .claude/skills/test-ebuild/scripts/portage-user-env.sh
 #
 # EBUILD_TEST_DIR overrides the work directory (default: <repo>/.work).
-# Distfiles are read directly from <repo>/fontes (Portage only reads them).
+# Distfiles are read directly from <repo>/fontes (Portage only reads them; the Brave
+# ebuild writes its source cache to fontes/brave-browser-src).
 
 if [[ ${BASH_SOURCE[0]} == "${0}" ]]; then
 	echo "error: source this file instead of executing it" >&2

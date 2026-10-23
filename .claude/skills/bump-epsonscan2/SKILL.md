@@ -71,8 +71,9 @@ Work in a scratch directory outside the repository (or under `.work/`), never in
    and fall back to.
 
 7. **Run the `test-ebuild` skill** for `-gui -wifi`, `gui` and `wifi` on the new ebuild.
-   Only after it passes, `git rm` the old ebuild and its old patches, and regenerate the
-   Manifest once more so it drops the old DIST line.
+   Only after it passes, keep the three most recent ebuilds (see CLAUDE.md): `git rm` the
+   older ones and the patches only they use, and regenerate the Manifest once more so it
+   drops their DIST lines.
 
 8. **Update the docs**: the patch table and version numbers in
    `media-gfx/epsonscan2/README.md` and the root `README.md`.
@@ -88,7 +89,8 @@ The package is versioned after the plugin RPM, not after the bundle.
    ```
 
 2. Pick the update path:
-   - **Same plugin version:** only change `BUNDLE` and regenerate the Manifest.
+   - **Same plugin version:** copy the ebuild to the next revision (`-rN`), change only
+     `BUNDLE` there and regenerate the Manifest.
    - **New plugin version:** create a new ebuild named after it.
 3. Inspect the payload before changing `src_install`. Extract it with
    `bsdtar -xf <rpm>` into a scratch dir.

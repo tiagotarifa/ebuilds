@@ -12,9 +12,16 @@ Clang/Rust toolchains). The ebuild runs that itself in `src_unpack`, so:
 
 - it is marked `PROPERTIES="live"`: that is what lets Portage give `src_unpack` network
   access even with `FEATURES=network-sandbox`. Configure, compile and install run offline;
-- nothing is stored in `DISTDIR` except a pinned Node.js 24 tarball (brave-core's tooling
-  requires Node 24 and pnpm 11; both are private to the build and never installed);
-- every emerge downloads the sources again (several GB, shallow clones).
+- the only regular distfile is a pinned Node.js 24 tarball (brave-core's tooling requires
+  Node 24 and pnpm 11; both are private to the build and never installed);
+- the first build downloads the sources (several GB, shallow clones) and caches the
+  prepared tree, without VCS data, in
+  `DISTDIR/brave-browser-src/brave-browser-<version>-src.tar.zst` (about 7 GB; that
+  much extra free space is needed in `DISTDIR`). Later builds of the same version unpack
+  it and need no network. It is kept in a subdirectory so `eclean-dist` doesn't remove it:
+  delete old versions by hand, and delete the current one to force a new download. If
+  `DISTDIR` isn't writable the build goes on without caching. The tarball contains
+  third-party code under many licences: don't redistribute it.
 
 The Brave tag (`v${PV}`), the Chromium version and the Node/pnpm versions are pinned in the
 ebuild, and the ebuild checks that brave-core asks for the expected Chromium.

@@ -20,6 +20,12 @@ Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2 and Brave. Public repo
 ## Ebuild conventions
 
 - EAPI 8, `KEYWORDS="~amd64"` (plugin: `-* ~amd64`).
+- Never change a committed ebuild in place: copy it to the next revision (`foo-1.0.ebuild` →
+  `foo-1.0-r1.ebuild`, `-r1` → `-r2`; see the
+  [devmanual](https://devmanual.gentoo.org/eclass-reference/ebuild/index.html)) and edit the
+  copy. Keep only the three most recent ebuilds of each package; delete older ones, plus
+  patches in `files/` that only they use. Patches are named after `${P}`, which has no
+  revision, so revisions share them.
 - Both Epson distfiles are `RESTRICT="fetch"`: Epson's CDN rejects automated downloads (HTTP 403),
   so `pkg_nofetch` explains the manual download.
 - Patch files are named `${P}-<topic>.patch` and start with a short paragraph explaining
@@ -54,10 +60,15 @@ Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2 and Brave. Public repo
 
 ## Brave facts that are easy to miss
 
-- No source tarball exists and the user wants nothing stored: `src_unpack` runs brave-core's
-  `pnpm run init --no-history` (gclient). `PROPERTIES="live"` is what gives `src_unpack`
-  network access under `network-sandbox` (Portage `doebuild.py`, `_doebuild_spawn`); every
-  later phase must work offline. Only the pinned Node 24 tarball is in `SRC_URI`.
+- No source tarball exists: `src_unpack` runs brave-core's `pnpm run init --no-history`
+  (gclient). `PROPERTIES="live"` is what gives `src_unpack` network access under
+  `network-sandbox` (Portage `doebuild.py`, `_doebuild_spawn`); every later phase must work
+  offline. Only the pinned Node 24 tarball is in `SRC_URI`.
+- The prepared tree (`src/` without VCS data, `pnpm/`, `pnpm-store/`) is cached in
+  `${PORTAGE_ACTUAL_DISTDIR}/brave-browser-src/${P}-src.tar.zst` (the phases' `DISTDIR`
+  is a shadow dir; `addwrite` as in `git-r3`); when present `src_unpack` only extracts it.
+  Never add it to `SRC_URI`/Manifest nor upload it. Anything `src_unpack` adds that later
+  phases need must live under `WORKDIR` and go into the tarball (`brave_node_env`).
 - brave-core's `devEngines` demand Node 24 and pnpm ≥ 11.11 (hard failure otherwise); both
   are pinned at the top of the ebuild (`NODE_VER`, `PNPM_VER`), with `CHROMIUM_VER` checked
   against `brave/package.json`.
@@ -106,6 +117,9 @@ Use the `test-ebuild` skill: it runs `ebuild … clean install` as a normal user
 private `PORTAGE_TMPDIR` under `.work/` (git-ignored) and `DISTDIR=fontes/`. Test every USE
 combination and check QA notices. Never use `sudo`/`su`/root and never run a real
 `emerge` (only `emerge -p`, which asks for permission); installing is left to the user.
+Brave's `pnpm run init` fails with a `PORTAGE_TMPDIR` under `.work/`: `tsx` creates a Unix
+socket in `${T}` and the path exceeds 108 characters. Use a short one such as
+`/var/tmp/bt-a` for that test.
 
 ## Privacy
 

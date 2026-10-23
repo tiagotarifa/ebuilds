@@ -7,6 +7,16 @@ Gentoo overlay with:
 - **Brave**, the privacy-focused web browser, built from source with its optional
   features selectable through USE flags.
 
+> [!CAUTION]
+> **USE AT YOUR OWN RISK.** This is a personal overlay, not part of Gentoo and not
+> endorsed by Epson or Brave Software. Whatever you install from it is your own
+> responsibility.
+
+> [!WARNING]
+> **NO WARRANTY.** These ebuilds and patches are provided "as is", without warranty of any
+> kind, express or implied. They may fail to build, break your system or the installed
+> software, and may stop being maintained at any time.
+
 ## Packages
 
 | Package | Description |
@@ -35,7 +45,8 @@ auto-sync = yes
 ```
 
 All packages are keyworded `~amd64`. The Epson distfiles are fetch-restricted (Epson
-does not allow automated downloads); Brave's sources are downloaded during the build.
+does not allow automated downloads); Brave's sources are downloaded during the first build
+and cached in `DISTDIR`.
 See each package's README for the details.
 
 ## Credits

@@ -14,10 +14,21 @@ writes only to `.work/` inside the repository (git-ignored).
 source .claude/skills/test-ebuild/scripts/portage-user-env.sh
 ```
 
-It sets `PORTAGE_TMPDIR`, `DISTDIR` (pointing at `fontes/`, read-only use),
+It sets `PORTAGE_TMPDIR`, `DISTDIR` (pointing at `fontes/`; read-only except for Brave's source cache),
 `PORTAGE_REPOSITORIES` and disables the root-only features. It must be sourced, not
 executed (executing it fails on purpose). Source it in the same shell command as the
 `ebuild` calls, since shell state does not persist between tool calls.
+
+`www-client/brave-browser` writes its source cache to `fontes/brave-browser-src/` (git-ignored).
+To test the download path, move that tarball aside instead of deleting it (it takes long to
+rebuild); to test the cached path, use a different `PORTAGE_TMPDIR` than the one that
+created it, which catches absolute build paths left in the tree, and run `ebuild` under
+`unshare -cn` (same user, no network) to prove it builds offline.
+
+Brave needs a short `PORTAGE_TMPDIR` (set it after sourcing the script, e.g.
+`/var/tmp/bt-a`): under `.work/`, `tsx` (run by `pnpm run init`) creates its Unix socket
+at `${T}/tsx-<uid>/<pid>.pipe`, which exceeds the 108-character limit, and `init` fails
+with `listen EINVAL`.
 
 If a distfile is missing from `fontes/`, stop and ask the user to download it with a
 browser (Epson's CDN returns 403 to scripts); `pkg_nofetch` in the ebuild says from where.
