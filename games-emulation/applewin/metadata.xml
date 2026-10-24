@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>tiagotarifa@gmail.com</email>
+		<name>Tiago Tarifa Munhoz</name>
+	</maintainer>
+	<longdescription lang="en">
+		AppleWin is an emulator of the Apple II, II Plus, //e and enhanced //e,
+		and of clones such as the Pravets and TK3000, with many peripheral cards
+		(Mockingboard, Disk II, hard disk, Super Serial Card, Uthernet, ...) and a
+		symbolic debugger. This is the Linux port by Andrea Odetti, with SDL2, Qt6,
+		ncurses and libretro frontends.
+	</longdescription>
+	<use>
+		<flag name="libretro">Build the libretro core (applewin_libretro.so) for libretro frontends such as RetroArch</flag>
+		<flag name="ncurses">Build the ncurses terminal frontend (applen)</flag>
+		<flag name="network">Emulate the Uthernet network cards through <pkg>net-libs/libslirp</pkg></flag>
+		<flag name="qt6">Build the Qt6 frontend (qapple)</flag>
+		<flag name="sdl">Build the SDL2 + Dear ImGui frontend with the debugger (sa2)</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">audetto/AppleWin</remote-id>
+	</upstream>
+</pkgmetadata>

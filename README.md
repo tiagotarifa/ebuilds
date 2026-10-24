@@ -5,7 +5,9 @@ Gentoo overlay with:
 - **Epson Scan 2**, the Epson scanner driver for Linux, built from source with a SANE
   backend usable from simple-scan, xsane, `scanimage`, etc.;
 - **Brave**, the privacy-focused web browser, built from source with its optional
-  features selectable through USE flags.
+  features selectable through USE flags;
+- **AppleWin**, the Apple II emulator (Linux port), with SDL2, Qt6, ncurses and libretro
+  frontends.
 
 > [!CAUTION]
 > **USE AT YOUR OWN RISK.** This is a personal overlay, not part of Gentoo and not
@@ -24,6 +26,7 @@ Gentoo overlay with:
 | [`media-gfx/epsonscan2`](media-gfx/epsonscan2/README.md) | Epson Scan 2 built from source: SANE backend (driver-only build possible) and optional Qt6 front-end. Free software. |
 | [`media-gfx/epsonscan2-non-free-plugin`](media-gfx/epsonscan2-non-free-plugin/README.md) | Proprietary, binary-only Epson plugins (network scanning, some USB models, image processing). Optional, pulled in by `media-gfx/epsonscan2[wifi]`. |
 | [`www-client/brave-browser`](www-client/brave-browser/README.md) | Brave web browser (stable) built from source; the ebuild downloads the sources itself while building. |
+| [`games-emulation/applewin`](games-emulation/applewin/README.md) | AppleWin Apple II emulator (Linux port), snapshot of upstream `master`. |
 
 ## Adding the overlay
 
@@ -61,3 +64,6 @@ LGPL-2.1+ (udev rules GPL-3+); the plugin is distributed under the EPSON license
 The Brave ebuild is based on `www-client/chromium` from the Gentoo repository and on
 [another-brave-overlay](https://github.com/falbrechtskirchinger/another-brave-overlay)
 by Florian Albrechtskirchinger. Brave is © Brave Software, licensed under MPL-2.0.
+
+AppleWin is by Tom Charlesworth, Michael Pohoreski and the AppleWin team, licensed under
+GPL-2+; the Linux port is by Andrea Odetti.

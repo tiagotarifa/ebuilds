@@ -1,0 +1,29 @@
+ROOT_PATH, the path of the resource folder (bin/, with the debugger symbol
+tables) relative to the executable, is compiled in and computed as the path
+from the build directory to the source tree, so an installed binary looks for
+it inside the build directory. Allow overriding it with APPLEWIN_ROOT_PATH.
+
+diff --git a/source/frontends/common2/CMakeLists.txt b/source/frontends/common2/CMakeLists.txt
+index c4f9303..4df32d6 100644
+--- a/source/frontends/common2/CMakeLists.txt
++++ b/source/frontends/common2/CMakeLists.txt
+@@ -44,10 +44,15 @@ target_link_libraries(common2 PRIVATE
+   apple2roms
+   )
+ 
+-file(RELATIVE_PATH ROOT_PATH ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR})
+-if ("${ROOT_PATH}" STREQUAL "")
+-  # if the 2 paths are the same
+-  set(ROOT_PATH "./")
++set(APPLEWIN_ROOT_PATH "" CACHE STRING "path of the resources relative to the executable (default: the source tree)")
++if (APPLEWIN_ROOT_PATH)
++  set(ROOT_PATH "${APPLEWIN_ROOT_PATH}")
++else()
++  file(RELATIVE_PATH ROOT_PATH ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR})
++  if ("${ROOT_PATH}" STREQUAL "")
++    # if the 2 paths are the same
++    set(ROOT_PATH "./")
++  endif()
+ endif()
+ 
+ # yaml parsing is so complicated that we need a test!

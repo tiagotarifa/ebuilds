@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2 and Brave. Public repository: see
+Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2, Brave and AppleWin. Public repository: see
 [Privacy](#privacy) before committing anything.
 
 ## Layout
@@ -11,6 +11,9 @@ Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2 and Brave. Public repo
   bundle with `rpm.eclass`.
 - `www-client/brave-browser/` — Brave built from source (brave-core + Chromium). `files/` has
   the launcher, `/etc/brave-browser/default`, the support-file generator and patches.
+- `games-emulation/applewin/` — AppleWin (Apple II emulator), CMake, snapshot of
+  audetto/AppleWin `master`; git submodules (imgui, imgui_club, imgui-filebrowser, QHexView)
+  are separate `SRC_URI` tarballs pinned to the commits the snapshot references.
 - `metadata/layout.conf` — `thin-manifests = true`: Manifests only hold `DIST` lines.
 - Each package has a `README.md` for end users; the root `README.md` links to them.
 - `fontes/` (git-ignored) holds the distfiles; they can't be committed or redistributed.
@@ -110,6 +113,19 @@ Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2 and Brave. Public repo
   "Unofficial build" line to `brave://settings/help`. Rebase both on every bump.
 - Re-running later phases of an existing build dir reuses `temp/environment`: delete it (and
   `.setuped`) for ebuild edits to take effect.
+
+## AppleWin facts that are easy to miss
+
+- The source is audetto/AppleWin, not the seanshpark/AppleWinLinux fork (a Raspberry Pi 1
+  hack: hardcoded `-march=armv6`, CPU forced to 65C02).
+- With every `BUILD_*` frontend option OFF upstream builds all of them, hence the
+  `REQUIRED_USE`.
+- `ROOT_PATH` (resources relative to the executable, i.e. `g_sProgramDir` with the debugger
+  `.SYM` files) is compiled in; the `resource-path` patch sets it to `../share/applewin`.
+  It's only used by `common2` (every frontend but `qapple`), as is `testyaml`.
+- `resource/Cousine-Regular.ttf` is a symlink into the imgui submodule and is embedded by
+  every frontend, so the imgui tarball is needed even with `-sdl`.
+- `--log` always writes `/tmp/AppleWin.log` (`Log.cpp`).
 
 ## Testing
 

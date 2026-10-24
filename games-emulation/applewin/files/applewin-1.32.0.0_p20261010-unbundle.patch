@@ -1,0 +1,50 @@
+Use the system libyaml, zlib and minizip instead of the bundled copies in
+libyaml/, zlib/ and minizip/ (removed in src_prepare).
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d4c9ff9..c6b45d0 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -47,9 +47,10 @@ execute_process(
+ 
+ include_directories(source)
+ 
+-add_subdirectory(libyaml)
+-add_subdirectory(zlib)
+-add_subdirectory(minizip)
++find_package(PkgConfig REQUIRED)
++pkg_check_modules(YAML REQUIRED IMPORTED_TARGET yaml-0.1)
++pkg_check_modules(MINIZIP REQUIRED IMPORTED_TARGET minizip)
++pkg_check_modules(ZLIB REQUIRED IMPORTED_TARGET zlib)
+ add_subdirectory(source)
+ add_subdirectory(resource)
+ add_subdirectory(test/TestCPU6502)
+diff --git a/source/CMakeLists.txt b/source/CMakeLists.txt
+index 6f00372..0acb487 100644
+--- a/source/CMakeLists.txt
++++ b/source/CMakeLists.txt
+@@ -290,8 +290,9 @@ else()
+ endif()
+ 
+ target_link_libraries(appleii PUBLIC
+-  yaml
+-  minizip
++  PkgConfig::YAML
++  PkgConfig::MINIZIP
++  PkgConfig::ZLIB
+   )
+ 
+ target_link_directories(appleii PUBLIC
+diff --git a/source/frontends/common2/CMakeLists.txt b/source/frontends/common2/CMakeLists.txt
+index 7134b56..c4f9303 100644
+--- a/source/frontends/common2/CMakeLists.txt
++++ b/source/frontends/common2/CMakeLists.txt
+@@ -57,7 +57,7 @@ add_executable(testyaml
+   )
+ 
+ target_link_libraries(testyaml PRIVATE
+-  yaml
++  PkgConfig::YAML
+   )
+ 
+ configure_file(common_config.h.in common_config.h)
