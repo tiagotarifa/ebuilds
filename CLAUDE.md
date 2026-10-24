@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2, Brave and AppleWin. Public repository: see
+Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2, Brave, AppleWin and Shotcut. Public repository: see
 [Privacy](#privacy) before committing anything.
 
 ## Layout
@@ -14,6 +14,9 @@ Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2, Brave and AppleWin. P
 - `games-emulation/applewin/` — AppleWin (Apple II emulator), CMake, snapshot of
   audetto/AppleWin `master`; git submodules (imgui, imgui_club, imgui-filebrowser, QHexView)
   are separate `SRC_URI` tarballs pinned to the commits the snapshot references.
+- `media-video/shotcut/` — Shotcut, a version bump of the Gentoo ebuild (same name, higher
+  version than `::gentoo`). Compare with the Gentoo ebuild and with upstream's
+  `CMakeLists.txt` on every bump; drop the package once Gentoo catches up.
 - `metadata/layout.conf` — `thin-manifests = true`: Manifests only hold `DIST` lines.
 - Each package has a `README.md` for end users; the root `README.md` links to them.
 - `fontes/` (git-ignored) holds the distfiles; they can't be committed or redistributed.

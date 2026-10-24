@@ -7,7 +7,8 @@ Gentoo overlay with:
 - **Brave**, the privacy-focused web browser, built from source with its optional
   features selectable through USE flags;
 - **AppleWin**, the Apple II emulator (Linux port), with SDL2, Qt6, ncurses and libretro
-  frontends.
+  frontends;
+- **Shotcut**, the video editor, newer than the version in the Gentoo repository.
 
 > [!CAUTION]
 > **USE AT YOUR OWN RISK.** This is a personal overlay, not part of Gentoo and not
@@ -27,6 +28,7 @@ Gentoo overlay with:
 | [`media-gfx/epsonscan2-non-free-plugin`](media-gfx/epsonscan2-non-free-plugin/README.md) | Proprietary, binary-only Epson plugins (network scanning, some USB models, image processing). Optional, pulled in by `media-gfx/epsonscan2[wifi]`. |
 | [`www-client/brave-browser`](www-client/brave-browser/README.md) | Brave web browser (stable) built from source; the ebuild downloads the sources itself while building. |
 | [`games-emulation/applewin`](games-emulation/applewin/README.md) | AppleWin Apple II emulator (Linux port), snapshot of upstream `master`. |
+| [`media-video/shotcut`](media-video/shotcut/README.md) | Shotcut video editor, a version bump of the Gentoo ebuild. |
 
 ## Adding the overlay
 
@@ -67,3 +69,6 @@ by Florian Albrechtskirchinger. Brave is © Brave Software, licensed under MPL-2
 
 AppleWin is by Tom Charlesworth, Michael Pohoreski and the AppleWin team, licensed under
 GPL-2+; the Linux port is by Andrea Odetti.
+
+The Shotcut ebuild is based on `media-video/shotcut` from the Gentoo repository. Shotcut
+is © Meltytech, LLC, licensed under GPL-3+.

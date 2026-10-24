@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>tiagotarifa@gmail.com</email>
+		<name>Tiago Tarifa Munhoz</name>
+	</maintainer>
+	<longdescription lang="en">
+		Shotcut is a free, open source, cross-platform video editor based on the
+		MLT multimedia framework, with native timeline editing, support for
+		hundreds of audio and video formats through FFmpeg, and many video and
+		audio filters.
+	</longdescription>
+	<use>
+		<flag name="vulkan">Use Vulkan instead of VA-API for hardware video decoding (needs <pkg>media-video/ffmpeg</pkg> with vulkan)</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">mltframework/shotcut</remote-id>
+	</upstream>
+</pkgmetadata>
