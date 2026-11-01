@@ -4,8 +4,9 @@
 #   source .claude/skills/test-ebuild/scripts/portage-user-env.sh
 #
 # EBUILD_TEST_DIR overrides the work directory (default: <repo>/.work).
-# Distfiles are read directly from <repo>/fontes (Portage only reads them; the Brave
-# ebuild writes its source cache to fontes/brave-browser-src).
+# Distfiles are read directly from <repo>/fontes, the main checkout's also in a git worktree
+# (Portage only reads them; the Brave ebuild writes its source cache to
+# fontes/brave-browser-src).
 
 if [[ ${BASH_SOURCE[0]} == "${0}" ]]; then
 	echo "error: source this file instead of executing it" >&2
@@ -13,12 +14,15 @@ if [[ ${BASH_SOURCE[0]} == "${0}" ]]; then
 fi
 
 _portage_user_env() {
-	local repo gentoo
+	local repo main gentoo
 	repo=$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel) || return 1
+	# In a git worktree fontes/ is only in the main checkout
+	main=$(git -C "${repo}" rev-parse --path-format=absolute --git-common-dir) || return 1
+	main=${main%/.git}
 	gentoo=$(portageq get_repo_path / gentoo) || return 1
 
-	if [[ ! -d ${repo}/fontes ]]; then
-		echo "error: ${repo}/fontes (distfiles) not found" >&2
+	if [[ ! -d ${main}/fontes ]]; then
+		echo "error: ${main}/fontes (distfiles) not found" >&2
 		return 1
 	fi
 
@@ -26,7 +30,7 @@ _portage_user_env() {
 	mkdir -p "${EBUILD_TEST_DIR}"/tmp || return 1
 
 	export PORTAGE_TMPDIR=${EBUILD_TEST_DIR}/tmp
-	export DISTDIR=${repo}/fontes
+	export DISTDIR=${main}/fontes
 	export PORTAGE_REPOSITORIES="
 [DEFAULT]
 main-repo = gentoo

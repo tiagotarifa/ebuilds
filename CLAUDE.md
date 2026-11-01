@@ -140,6 +140,21 @@ Brave's `pnpm run init` fails with a `PORTAGE_TMPDIR` under `.work/`: `tsx` crea
 socket in `${T}` and the path exceeds 108 characters. Use a short one such as
 `/var/tmp/bt-a` for that test.
 
+## Automation
+
+`tools/auto-update/auto-update.py` (run weekly from cron by `cron.sh`) checks upstream for new
+releases: GitHub for Brave, Shotcut and AppleWin (release tags only, not `master`), the AUR as a
+proxy for Epson (its site rejects scripts; Epson bumps start once the user puts the distfiles
+in `fontes/`). For each package with a new release it works in a git worktree
+(`.work/auto-update/wt/`) on a branch `auto-update/<pn>-<version>`. There it copies the newest
+ebuild and patches mechanically, regenerates the Manifest and runs the `test-ebuild` procedure.
+If that passes it keeps three ebuilds, updates the READMEs, checks the diff for private data
+and commits on the branch. It never touches `main` and never pushes. Only when something fails
+does it start `claude -p` with `fix-prompt.md`: Claude fixes the worktree and re-tests with
+`--resume <pkg>`, and the script commits. Claude never commits. Logs and `report.md` are in
+`.work/auto-update/logs/`. A branch that exists blocks that version until it is merged or
+deleted.
+
 ## Privacy
 
 This repository is published. Never commit data about the maintainer's machine, network or
