@@ -1,0 +1,263 @@
+Block telemetry: this source build is not supported by Brave Software.
+
+Nothing from it should reach Brave's analytics or crash servers. Brave Origin
+branded builds already turn P3A, the usage ping and crash reporting off by
+default; do the same for every build, and block them in code so that neither
+the settings, a policy nor a hand-edited Local State can turn them back on:
+- P3A: P3AService::IsP3AEnabled() is always false;
+- usage ping: referral and SERP-metrics pings are always disallowed (the
+  stats updater itself is compiled out with enable_brave_stats_updater=false);
+- crash reports: no upload URL, reporting off by default;
+- the corresponding settings toggles and welcome-page offers are hidden.
+
+diff --git a/brave/browser/brave_local_state_prefs.cc b/brave/browser/brave_local_state_prefs.cc
+index b67532b..5121fee 100644
+--- a/brave/browser/brave_local_state_prefs.cc
++++ b/brave/browser/brave_local_state_prefs.cc
+@@ -176,7 +176,8 @@ void RegisterLocalStatePrefs(PrefRegistrySimple* registry) {
+   // map, referrals service, SERP tab helper, Brave Origin service) that
+   // remain compiled in even when the stats updater itself is excluded, so
+   // it must always be registered.
+-  registry->RegisterBooleanPref(kStatsReportingEnabled, true);
++  // Gentoo: unofficial build, usage pings are blocked.
++  registry->RegisterBooleanPref(kStatsReportingEnabled, false);
+ #if BUILDFLAG(ENABLE_BRAVE_STATS_UPDATER)
+   brave_stats::RegisterLocalStatePrefs(registry);
+ #endif
+diff --git a/brave/browser/metrics/metrics_reporting_util.cc b/brave/browser/metrics/metrics_reporting_util.cc
+index 6684d09..07a7f83 100644
+--- a/brave/browser/metrics/metrics_reporting_util.cc
++++ b/brave/browser/metrics/metrics_reporting_util.cc
+@@ -19,23 +19,8 @@
+ #include "components/version_info/channel.h"
+ 
+ bool GetDefaultPrefValueForMetricsReporting() {
+-#if BUILDFLAG(IS_BRAVE_ORIGIN_BRANDED)
++  // Gentoo: unofficial build, crash reports are off (and never uploaded).
+   return false;
+-#else
+-  auto channel = chrome::GetChannel();
+-  switch (channel) {
+-    case version_info::Channel::STABLE:
+-      return false;
+-    case version_info::Channel::BETA:    // fall through
+-    case version_info::Channel::DEV:     // fall through
+-    case version_info::Channel::CANARY:
+-      return true;
+-    case version_info::Channel::UNKNOWN:
+-      return false;
+-  }
+-  NOTREACHED() << "Unexpected value for channel: "
+-               << std::to_underlying(channel);
+-#endif  // BUILDFLAG(IS_BRAVE_ORIGIN_BRANDED)
+ }
+ 
+ bool ShouldShowCrashReportPermissionAskDialog() {
+diff --git a/brave/browser/resources/settings/brave_data_collection_page/brave_data_collection_page.html b/brave/browser/resources/settings/brave_data_collection_page/brave_data_collection_page.html
+index fb21160..4a35d15 100644
+--- a/brave/browser/resources/settings/brave_data_collection_page/brave_data_collection_page.html
++++ b/brave/browser/resources/settings/brave_data_collection_page/brave_data_collection_page.html
+@@ -18,19 +18,12 @@
+         on-settings-boolean-control-change="onStatsUsagePingEnabledChange_">
+     </settings-toggle-button>
+   </template>
+-  <settings-toggle-button id="metricsReportingControl"
+-      class="hr"
+-      pref="[[metricsReportingPref_]]"
+-      label="$i18n{enablePersonalizationLogging}"
+-      sub-label="$i18n{enablePersonalizationLoggingDesc}" no-set-pref
+-      on-settings-boolean-control-change="onMetricsReportingChange_">
+-    <template is="dom-if" if="[[showRestartForMetricsReporting_]]" restamp>
+-      <cr-button on-click="restartBrowser_" id="restart"
+-          slot="more-actions">
+-        $i18n{restart}
+-      </cr-button>
+-    </template>
+-  </settings-toggle-button>
++  <div class="cr-row first">
++    <div class="secondary">
++      Usage statistics (P3A, usage ping) and crash reports are disabled in this
++      unofficial build.
++    </div>
++  </div>
+ <if expr="enable_brave_ads">
+   <template is="dom-if" if="[[showSponsoredAdsEnabledToggle_]]">
+     <settings-toggle-button id="sponsoredAdsEnabled"
+diff --git a/brave/browser/serp_metrics/serp_metrics_tab_helper.cc b/brave/browser/serp_metrics/serp_metrics_tab_helper.cc
+index c47e97f..ef177cd 100644
+--- a/brave/browser/serp_metrics/serp_metrics_tab_helper.cc
++++ b/brave/browser/serp_metrics/serp_metrics_tab_helper.cc
+@@ -29,7 +29,8 @@ namespace serp_metrics {
+ namespace {
+ 
+ bool IsAllowedToSendUsagePings() {
+-  return g_browser_process->local_state()->GetBoolean(kStatsReportingEnabled);
++  // Gentoo: unofficial build, usage pings are blocked.
++  return false;
+ }
+ 
+ bool ShouldRecordSearchEngine(SearchEngineType search_engine_type,
+diff --git a/brave/browser/ui/webui/brave_welcome_page/brave_welcome_page_ui.cc b/brave/browser/ui/webui/brave_welcome_page/brave_welcome_page_ui.cc
+index d7443bc..45cd8b1 100644
+--- a/brave/browser/ui/webui/brave_welcome_page/brave_welcome_page_ui.cc
++++ b/brave/browser/ui/webui/brave_welcome_page/brave_welcome_page_ui.cc
+@@ -105,12 +105,10 @@ BraveWelcomePageUI::BraveWelcomePageUI(content::WebUI* web_ui)
+ 
+   source->AddLocalizedStrings(webui::kBraveWelcomePageStrings);
+ 
+-  PrefService* local_state = g_browser_process->local_state();
+-  source->AddBoolean("isCrashReportingPrefManaged",
+-                     local_state->IsManagedPreference(
+-                         metrics::prefs::kMetricsReportingEnabled));
+-  source->AddBoolean("isP3APrefManaged",
+-                     local_state->IsManagedPreference(p3a::kP3AEnabled));
++  // Gentoo: crash reports and P3A are blocked in this unofficial build: don't
++  // offer them.
++  source->AddBoolean("isCrashReportingPrefManaged", true);
++  source->AddBoolean("isP3APrefManaged", true);
+ #if BUILDFLAG(ENABLE_WEB_DISCOVERY)
+   source->AddBoolean(
+       "isWebDiscoveryPrefManaged",
+diff --git a/brave/browser/ui/webui/settings/brave_privacy_handler.cc b/brave/browser/ui/webui/settings/brave_privacy_handler.cc
+index e5fbd95..de1c13f 100644
+--- a/brave/browser/ui/webui/settings/brave_privacy_handler.cc
++++ b/brave/browser/ui/webui/settings/brave_privacy_handler.cc
+@@ -162,20 +162,10 @@ void BravePrivacyHandler::AddLoadTimeData(content::WebUIDataSource* data_source,
+       ai_chat::IsAIChatEnabled(profile->GetPrefs()) &&
+           ai_chat::features::IsOpenAIChatFromBraveSearchEnabled());
+ #endif
+-#if BUILDFLAG(IS_BRAVE_ORIGIN_BRANDED)
+-  // P3A and usage ping (stats reporting) are disabled for Brave Origin branded
+-  // builds. Hide their settings unconditionally so they don't briefly appear on
+-  // first launch before the disabling policy is applied (brave-browser#56166).
++  // Gentoo: P3A and usage ping are blocked in this unofficial build, as in
++  // Brave Origin branded builds: hide their settings.
+   data_source->AddBoolean("isStatsReportingEnabledManaged", true);
+   data_source->AddBoolean("isP3AEnabledManaged", true);
+-#else
+-  auto* local_state = g_browser_process->local_state();
+-  data_source->AddBoolean(
+-      "isStatsReportingEnabledManaged",
+-      local_state->IsManagedPreference(kStatsReportingEnabled));
+-  data_source->AddBoolean("isP3AEnabledManaged",
+-                          local_state->IsManagedPreference(p3a::kP3AEnabled));
+-#endif
+ 
+ #if BUILDFLAG(IS_WIN)
+   {
+diff --git a/brave/browser/ui/webui/welcome_page/brave_welcome_ui.cc b/brave/browser/ui/webui/welcome_page/brave_welcome_ui.cc
+index 84b55d7..bfb5437 100644
+--- a/brave/browser/ui/webui/welcome_page/brave_welcome_ui.cc
++++ b/brave/browser/ui/webui/welcome_page/brave_welcome_ui.cc
+@@ -170,7 +170,6 @@ BraveWelcomeUI::BraveWelcomeUI(content::WebUI* web_ui, std::string_view name)
+       content::GpuDataManager::GetInstance()->HardwareAccelerationEnabled());
+ 
+   // Add managed state information for welcome flow logic
+-  PrefService* local_state = g_browser_process->local_state();
+   source->AddBoolean(
+       "isWebDiscoveryEnabledManaged",
+ #if BUILDFLAG(ENABLE_WEB_DISCOVERY)
+@@ -178,11 +177,10 @@ BraveWelcomeUI::BraveWelcomeUI(content::WebUI* web_ui, std::string_view name)
+ #else
+       false);
+ #endif
+-  source->AddBoolean("isMetricsReportingEnabledManaged",
+-                     local_state->IsManagedPreference(
+-                         metrics::prefs::kMetricsReportingEnabled));
+-  source->AddBoolean("isP3AEnabledManaged",
+-                     local_state->IsManagedPreference(p3a::kP3AEnabled));
++  // Gentoo: crash reports and P3A are blocked in this unofficial build: don't
++  // offer them.
++  source->AddBoolean("isMetricsReportingEnabledManaged", true);
++  source->AddBoolean("isP3AEnabledManaged", true);
+ 
+   profile->GetPrefs()->SetBoolean(
+       brave_welcome_page::prefs::kHasSeenBraveWelcomePage, true);
+diff --git a/brave/chromium_src/components/crash/core/app/crash_reporter_client.cc b/brave/chromium_src/components/crash/core/app/crash_reporter_client.cc
+index f4a73e1..f105ac2 100644
+--- a/brave/chromium_src/components/crash/core/app/crash_reporter_client.cc
++++ b/brave/chromium_src/components/crash/core/app/crash_reporter_client.cc
+@@ -3,12 +3,8 @@
+  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+  * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ 
+-#if defined(OFFICIAL_BUILD)
+-#define BRAVE_CRASH_REPORTER_CLIENT_GET_UPLOAD_URL \
+-  return "https://cr.brave.com";
+-#else
++// Gentoo: unofficial build, crash reports are never uploaded to Brave.
+ #define BRAVE_CRASH_REPORTER_CLIENT_GET_UPLOAD_URL return std::string();
+-#endif
+ 
+ #include <components/crash/core/app/crash_reporter_client.cc>
+ #undef BRAVE_CRASH_REPORTER_CLIENT_GET_UPLOAD_URL
+diff --git a/brave/components/brave_referrals/browser/brave_referrals_service.cc b/brave/components/brave_referrals/browser/brave_referrals_service.cc
+index eb6d284..0b8da0e 100644
+--- a/brave/components/brave_referrals/browser/brave_referrals_service.cc
++++ b/brave/components/brave_referrals/browser/brave_referrals_service.cc
+@@ -77,6 +77,12 @@ namespace brave {
+ 
+ namespace {
+ 
++// Gentoo: unofficial build, the referral pings to Brave are blocked whatever
++// kStatsReportingEnabled says.
++bool UsagePingsAllowed() {
++  return false;
++}
++
+ BraveReferralsService::ReferralInitializedCallback*
+     g_testing_referral_initialized_callback = nullptr;
+ 
+@@ -468,8 +474,7 @@ void BraveReferralsService::MaybeCheckForReferralFinalization() {
+     return;
+   }
+ 
+-  bool stats_reporting_enabled =
+-      pref_service_->GetBoolean(kStatsReportingEnabled);
++  bool stats_reporting_enabled = UsagePingsAllowed();
+   // Only check for referral finalization 30 times, with a 24-hour
+   // wait between checks or if stats reporting is disabled.
+   base::Time timestamp = pref_service_->GetTime(kReferralAttemptTimestamp);
+@@ -533,7 +538,7 @@ std::string BraveReferralsService::BuildReferralFinalizationCheckPayload()
+ }
+ 
+ void BraveReferralsService::InitReferral() {
+-  if (!pref_service_->GetBoolean(kStatsReportingEnabled)) {
++  if (!UsagePingsAllowed()) {
+     pref_service_->SetBoolean(kReferralInitialization, true);
+     if (g_testing_referral_initialized_callback) {
+       g_testing_referral_initialized_callback->Run(std::string());
+@@ -668,7 +673,7 @@ void BraveReferralsService::MaybeReportAndroidConversion() {
+   pref_service_->ClearPref(kReferralAndroidGbraid);
+   pref_service_->CommitPendingWrite();
+ 
+-  if (!pref_service_->GetBoolean(kStatsReportingEnabled)) {
++  if (!UsagePingsAllowed()) {
+     return;
+   }
+ 
+diff --git a/brave/components/p3a/p3a_service.cc b/brave/components/p3a/p3a_service.cc
+index 87bd291..99e34a3 100644
+--- a/brave/components/p3a/p3a_service.cc
++++ b/brave/components/p3a/p3a_service.cc
+@@ -93,8 +93,8 @@ P3AService::~P3AService() = default;
+ 
+ void P3AService::RegisterPrefs(PrefRegistrySimple* registry, bool first_run) {
+   MessageManager::RegisterPrefs(registry);
+-  registry->RegisterBooleanPref(kP3AEnabled,
+-                                !BUILDFLAG(IS_BRAVE_ORIGIN_BRANDED));
++  // Gentoo: unofficial build, P3A is blocked (see IsP3AEnabled()).
++  registry->RegisterBooleanPref(kP3AEnabled, false);
+   // New users are shown the P3A notice via the welcome page.
+   registry->RegisterBooleanPref(kP3ANoticeAcknowledged, first_run);
+ 
+@@ -178,7 +178,8 @@ base::CallbackListSubscription P3AService::RegisterMetricCycledCallback(
+ }
+ 
+ bool P3AService::IsP3AEnabled() const {
+-  return local_state_->GetBoolean(kP3AEnabled);
++  // Gentoo: unofficial build, never report to Brave whatever the pref says.
++  return false;
+ }
+ 
+ void P3AService::Init(
