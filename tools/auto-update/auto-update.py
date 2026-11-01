@@ -48,6 +48,10 @@ REPO = _main_checkout()
 FONTES = REPO / "fontes"
 WORK = REPO / ".work" / "auto-update"
 STATE_DIR = WORK / "state"
+# Builds write tens of GB (Brave); AUTO_UPDATE_SCRATCH moves them to another disk
+SCRATCH = Path(os.environ["AUTO_UPDATE_SCRATCH"]) if os.environ.get("AUTO_UPDATE_SCRATCH") \
+    else None
+BUILD_ROOT = (SCRATCH or WORK) / "build"
 ENV_SCRIPT = ".claude/skills/test-ebuild/scripts/portage-user-env.sh"
 IN_CLAUDE = os.environ.get("AUTO_UPDATE_IN_CLAUDE") == "1"
 MAX_RESUMES = 3        # --resume runs Claude may do per bump
@@ -70,8 +74,10 @@ PACKAGES = {
     "media-gfx/epsonscan2": {"uses": ["-gui -wifi", "gui", "wifi"]},
     "media-gfx/epsonscan2-non-free-plugin": {"uses": [""]},
     # Last: the build takes hours. tsx needs a short PORTAGE_TMPDIR (CLAUDE.md).
-    "www-client/brave-browser": {"uses": [""], "tmpdir": "/var/tmp/bt-au",
-                                 "qa_allow": [r"L10N warning: no bs in LANGS"]},
+    "www-client/brave-browser": {
+        "uses": [""], "tmpdir": str(SCRATCH / "bt") if SCRATCH else "/var/tmp/bt-au",
+        "qa_allow": [r"L10N warning: no bs in LANGS"],
+    },
 }
 
 
@@ -528,6 +534,7 @@ def call_claude(st, why):
     env = dict(os.environ, AUTO_UPDATE_IN_CLAUDE="1")
     cmd = ["claude", "-p", prompt, "--permission-mode", "auto", "--output-format", "json",
            "--add-dir", str(FONTES), "--add-dir", str(WORK),
+           *(["--add-dir", str(SCRATCH)] if SCRATCH else []),
            "--name", f"auto-update {st['pn']} {st['version']}"]
     try:
         with open(out, "w") as f:
@@ -585,7 +592,7 @@ def bump(cp, info, args, run_dir):
     st = {
         "cp": cp, "pn": pn, "version": info["version"], "info": info, "branch": branch,
         "worktree": str(worktree), "old_pvr": old.stem[len(pn) + 1:],
-        "build_dir": str(WORK / "build" / f"{pn}-{info['version']}"),
+        "build_dir": str(BUILD_ROOT / f"{pn}-{info['version']}"),
         "log_dir": str(run_dir), "status": "preparing", "no_claude": args.no_claude,
         "base": args.base,
         "summary": f"version bump to {info['version']}", "ebuild": "",

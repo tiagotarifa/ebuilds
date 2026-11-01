@@ -153,7 +153,8 @@ and commits on the branch. It never touches `main` and never pushes. Only when s
 does it start `claude -p` with `fix-prompt.md`: Claude fixes the worktree and re-tests with
 `--resume <pkg>`, and the script commits. Claude never commits. Logs and `report.md` are in
 `.work/auto-update/logs/`. A branch that exists blocks that version until it is merged or
-deleted.
+deleted. `AUTO_UPDATE_SCRATCH` (set in the crontab line) moves the build directories, Brave's
+`PORTAGE_TMPDIR` included, to another disk; `cron.sh` runs everything under `ionice -c 3`.
 
 ## Privacy
 
