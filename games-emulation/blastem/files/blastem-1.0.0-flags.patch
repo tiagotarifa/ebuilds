@@ -1,0 +1,71 @@
+The Makefile assigns CFLAGS and LDFLAGS with ":=", discarding the user's
+flags from the environment, and calls pkg-config by its plain name. Add
+EXTRA_CFLAGS/EXTRA_LDFLAGS (set by the ebuild) to the final flags, the
+linker flags before the libraries so that -Wl,--as-needed works, and use
+$(PKG_CONFIG), so that the toolchain's pkg-config and the user's flags are
+honoured. -O2 -flto come from OPT, which the ebuild sets to empty.
+
+diff --git a/Makefile b/Makefile
+index 96c73ff..9eb798e 100644
+--- a/Makefile
++++ b/Makefile
+@@ -9,6 +9,7 @@ ifndef SDL
+ SDL:=sdl2
+ endif
+ SDL_UPPER:=$(shell echo $(SDL) | tr '[a-z]' '[A-Z]')
++PKG_CONFIG?=pkg-config
+ FIXUP:=true
+ Z80_DISPATCH:=goto
+ 
+@@ -95,9 +96,9 @@ else #CPU=wasm
+ FONT:=nuklear_ui/font.o
+ ifneq ($(MAKECMDGOALS),libblastem.$(SO))
+ CHOOSER:=nuklear_ui/filechooser_gtk.o
+-GTKFLAGS:=$(shell pkg-config --cflags gtk+-3.0 2>/dev/null)
++GTKFLAGS:=$(shell $(PKG_CONFIG) --cflags gtk+-3.0 2>/dev/null)
+ ifeq ($(GTKFLAGS),)
+-GTKFLAGS:=$(shell pkg-config --cflags gtk+-2.0 2>/dev/null)
++GTKFLAGS:=$(shell $(PKG_CONFIG) --cflags gtk+-2.0 2>/dev/null)
+ ifeq ($(GTKFLAGS),)
+ CHOOSER:=nuklear_ui/filechooser_null.o
+ endif
+@@ -134,7 +135,7 @@ else #CPU=wasm
+ ifdef PORTABLE
+ ifdef USE_GLES
+ ifndef GLES_LIB
+-GLES_LIB:=$(shell pkg-config --libs glesv2)
++GLES_LIB:=$(shell $(PKG_CONFIG) --libs glesv2)
+ endif
+ LDFLAGS:=-lm $(GLES_LIB)
+ else #USE_GLES
+@@ -156,7 +157,7 @@ SDL_INCLUDE_PATH:=sdl/include
+ endif
+ LDFLAGS+= -Wl,-rpath='$$ORIGIN/lib' -Llib -l$(SDL_UPPER)
+ ifndef USE_GLES
+-LDFLAGS+= $(shell pkg-config --libs gl)
++LDFLAGS+= $(shell $(PKG_CONFIG) --libs gl)
+ endif
+ endif #Darwin
+ CFLAGS+= -I$(SDL_INCLUDE_PATH)
+@@ -165,8 +166,8 @@ else #PORTABLE
+ ifeq ($(MAKECMDGOALS),libblastem.$(SO))
+ LDFLAGS:=-lm
+ else
+-CFLAGS:=$(shell pkg-config --cflags-only-I $(LIBS)) $(CFLAGS)
+-LDFLAGS:=-lm $(shell pkg-config --libs $(LIBS))
++CFLAGS:=$(shell $(PKG_CONFIG) --cflags-only-I $(LIBS)) $(CFLAGS)
++LDFLAGS:=-lm $(shell $(PKG_CONFIG) --libs $(LIBS))
+ ifdef USE_FBDEV
+ LDFLAGS+= -pthread
+ endif
+@@ -193,8 +194,8 @@ endif #NOLTO
+ endif #DEBUG
+ LIBOBJDIR:=$(OBJDIR)/lib
+ 
+-CFLAGS:=$(OPT) $(CFLAGS)
+-LDFLAGS:=$(OPT) $(LDFLAGS)
++CFLAGS:=$(OPT) $(CFLAGS) $(EXTRA_CFLAGS)
++LDFLAGS:=$(OPT) $(EXTRA_LDFLAGS) $(LDFLAGS)
+ 
+ ifdef Z80_LOG_ADDRESS
+ CFLAGS+= -DZ80_LOG_ADDRESS
