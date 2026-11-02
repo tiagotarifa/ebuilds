@@ -71,6 +71,10 @@ PACKAGES = {
                  "-network libretro ncurses qt6 sdl"],
     },
     "media-video/shotcut": {"uses": ["-vulkan", "vulkan"]},
+    "games-fps/ironwail": {
+        "uses": ["", "-curl -mp3 -vorbis flac mikmod modplug opus xmp"],
+    },
+    "games-emulation/blastem": {"uses": ["-gtk", "gtk"]},
     "media-gfx/epsonscan2": {"uses": ["-gui -wifi", "gui", "wifi"]},
     "media-gfx/epsonscan2-non-free-plugin": {"uses": [""]},
     # Last: the build takes hours. tsx needs a short PORTAGE_TMPDIR (CLAUDE.md).
@@ -207,6 +211,21 @@ def check_applewin(pkgdir, notices):
     return best
 
 
+def check_ironwail(pkgdir, notices):
+    return check_github_release("andrei-drexler/ironwail", ebuilds(pkgdir)[-1][0])
+
+
+def check_blastem(pkgdir, notices):
+    # Mercurial (hgweb): one "<tag>\t<node>" line per tag
+    current = ebuilds(pkgdir)[-1][0]
+    best = None
+    for line in fetch("https://www.retrodev.com/repos/blastem/raw-tags").splitlines():
+        m = re.fullmatch(r"v(\d+(?:\.\d+)*)\t[0-9a-f]+", line.strip())
+        if m and newer(m.group(1), current) and (not best or newer(m.group(1), best["version"])):
+            best = {"version": m.group(1), "tag": f"v{m.group(1)}"}
+    return best
+
+
 def aur_version(name):
     res = fetch_json(f"https://aur.archlinux.org/rpc/v5/info?arg[]={name}")["results"]
     return res[0]["Version"].rsplit("-", 1)[0] if res else None
@@ -250,6 +269,8 @@ def check_plugin(pkgdir, notices):
 CHECKS = {
     "games-emulation/applewin": check_applewin,
     "media-video/shotcut": check_shotcut,
+    "games-fps/ironwail": check_ironwail,
+    "games-emulation/blastem": check_blastem,
     "media-gfx/epsonscan2": check_epsonscan2,
     "media-gfx/epsonscan2-non-free-plugin": check_plugin,
     "www-client/brave-browser": check_brave,
@@ -323,6 +344,8 @@ def prepare_plugin(pkgdir, pv, text, info):
 PREPARES = {
     "games-emulation/applewin": prepare_applewin,
     "media-video/shotcut": prepare_simple,
+    "games-fps/ironwail": prepare_simple,
+    "games-emulation/blastem": prepare_simple,
     "media-gfx/epsonscan2": prepare_simple,
     "media-gfx/epsonscan2-non-free-plugin": prepare_plugin,
     "www-client/brave-browser": prepare_brave,

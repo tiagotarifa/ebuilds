@@ -1,7 +1,7 @@
 # CLAUDE.md
 
-Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2, Brave, AppleWin and Shotcut. Public repository: see
-[Privacy](#privacy) before committing anything.
+Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2, Brave, AppleWin, Shotcut, Ironwail
+and BlastEm. Public repository: see [Privacy](#privacy) before committing anything.
 
 ## Layout
 
@@ -17,6 +17,9 @@ Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2, Brave, AppleWin and S
 - `media-video/shotcut/` — Shotcut, a version bump of the Gentoo ebuild (same name, higher
   version than `::gentoo`). Compare with the Gentoo ebuild and with upstream's
   `CMakeLists.txt` on every bump; drop the package once Gentoo catches up.
+- `games-fps/ironwail/` — Ironwail (Quake engine), CMake, from GitHub release tags.
+- `games-emulation/blastem/` — BlastEm (Genesis emulator), plain Makefile, from the `vX.Y.Z`
+  tags of upstream's Mercurial repository (hgweb `archive/` tarball).
 - `metadata/layout.conf` — `thin-manifests = true`: Manifests only hold `DIST` lines.
 - Each package has a `README.md` for end users; the root `README.md` links to them.
 - `fontes/` (git-ignored) holds the distfiles; they can't be committed or redistributed.
@@ -130,6 +133,22 @@ Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2, Brave, AppleWin and S
   every frontend, so the imgui tarball is needed even with `-sdl`.
 - `--log` always writes `/tmp/AppleWin.log` (`Log.cpp`).
 
+## Ironwail and BlastEm facts that are easy to miss
+
+- Ironwail's codecs are automagic upstream (`pkg_check_modules` with no option); the
+  `codec-options` patch adds `USE_CODEC_<NAME>` options. `ironwail.pak` is only searched next
+  to the executable and in the Quake basedirs, hence the `datadir` patch
+  (`IRONWAIL_DATADIR`). Of the store installs, only Steam is detected on Linux.
+- BlastEm's Makefile assigns `CFLAGS`/`LDFLAGS` with `:=` and forces `-O2 -flto` through
+  `OPT`: the `flags` patch adds `EXTRA_CFLAGS`/`EXTRA_LDFLAGS` and the ebuild passes `OPT=`.
+  `NO_FILE_CHOOSER` is broken upstream (`filechooser_nulll.o`) and `NOGL` doesn't build.
+- BlastEm's `DATA_PATH` is compiled in; `bundled_file_path()` also uses it for `termhelper`
+  (debugger), hence the symlink from `/usr/share/blastem` to `/usr/libexec/blastem`. Relative
+  Sega CD/ColecoVision BIOS paths resolve there too, so users must configure absolute ones.
+- `menu.bin`/`tmss.md` need the `vasm` assembler (not in Gentoo) and are not built.
+- BlastEm's GTK file chooser is `dlopen()`ed; `pkg-config gtk+-3.0` at build time is what
+  enables it (automagic upstream, controlled by `USE=gtk` through `GTKFLAGS`/`CHOOSER`).
+
 ## Testing
 
 Use the `test-ebuild` skill: it runs `ebuild … clean install` as a normal user with a
@@ -143,18 +162,19 @@ socket in `${T}` and the path exceeds 108 characters. Use a short one such as
 ## Automation
 
 `tools/auto-update/auto-update.py` (run weekly from cron by `cron.sh`) checks upstream for new
-releases: GitHub for Brave, Shotcut and AppleWin (release tags only, not `master`), the AUR as a
-proxy for Epson (its site rejects scripts; Epson bumps start once the user puts the distfiles
-in `fontes/`). For each package with a new release it works in a git worktree
-(`.work/auto-update/wt/`) on a branch `auto-update/<pn>-<version>`. There it copies the newest
-ebuild and patches mechanically, regenerates the Manifest and runs the `test-ebuild` procedure.
-If that passes it keeps three ebuilds, updates the READMEs, checks the diff for private data
-and commits on the branch. It never touches `main` and never pushes. Only when something fails
-does it start `claude -p` with `fix-prompt.md`: Claude fixes the worktree and re-tests with
-`--resume <pkg>`, and the script commits. Claude never commits. Logs and `report.md` are in
-`.work/auto-update/logs/`. A branch that exists blocks that version until it is merged or
-deleted. `AUTO_UPDATE_SCRATCH` (set in the crontab line) moves the build directories, Brave's
-`PORTAGE_TMPDIR` included, to another disk; `cron.sh` runs everything under `ionice -c 3`.
+releases: GitHub for Brave, Shotcut, Ironwail and AppleWin (release tags only, not `master`),
+BlastEm's hgweb `raw-tags`, the AUR as a proxy for Epson (its site rejects scripts; Epson bumps
+start once the user puts the distfiles in `fontes/`). For each package with a new release it
+works in a git worktree (`.work/auto-update/wt/`) on a branch `auto-update/<pn>-<version>`.
+There it copies the newest ebuild and patches mechanically, regenerates the Manifest and runs
+the `test-ebuild` procedure. If that passes it keeps three ebuilds, updates the READMEs, checks
+the diff for private data and commits on the branch. It never touches `main` and never pushes.
+Only when something fails does it start `claude -p` with `fix-prompt.md`: Claude fixes the
+worktree and re-tests with `--resume <pkg>`, and the script commits. Claude never commits. Logs
+and `report.md` are in `.work/auto-update/logs/`. A branch that exists blocks that version
+until it is merged or deleted. `AUTO_UPDATE_SCRATCH` (set in the crontab line) moves the build
+directories, Brave's `PORTAGE_TMPDIR` included, to another disk; `cron.sh` runs everything
+under `ionice -c 3`.
 
 ## Privacy
 

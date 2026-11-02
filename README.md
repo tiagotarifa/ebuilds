@@ -8,7 +8,9 @@ Gentoo overlay with:
   features selectable through USE flags;
 - **AppleWin**, the Apple II emulator (Linux port), with SDL2, Qt6, ncurses and libretro
   frontends;
-- **Shotcut**, the video editor, newer than the version in the Gentoo repository.
+- **Shotcut**, the video editor, newer than the version in the Gentoo repository;
+- **Ironwail**, a high-performance Quake engine (fork of QuakeSpasm);
+- **BlastEm**, an accurate Sega Genesis/Mega Drive emulator.
 
 > [!CAUTION]
 > **USE AT YOUR OWN RISK.** This is a personal overlay, not part of Gentoo and not
@@ -29,6 +31,8 @@ Gentoo overlay with:
 | [`www-client/brave-browser`](www-client/brave-browser/README.md) | Brave web browser (stable) built from source; the ebuild downloads the sources itself while building. |
 | [`games-emulation/applewin`](games-emulation/applewin/README.md) | AppleWin Apple II emulator (Linux port), snapshot of upstream `master`. |
 | [`media-video/shotcut`](media-video/shotcut/README.md) | Shotcut video editor, a version bump of the Gentoo ebuild. |
+| [`games-fps/ironwail`](games-fps/ironwail/README.md) | Ironwail Quake engine (QuakeSpasm fork). Needs your own Quake game data. |
+| [`games-emulation/blastem`](games-emulation/blastem/README.md) | BlastEm Sega Genesis/Mega Drive, Sega CD and 32X emulator. |
 
 ## Adding the overlay
 
@@ -72,3 +76,8 @@ GPL-2+; the Linux port is by Andrea Odetti.
 
 The Shotcut ebuild is based on `media-video/shotcut` from the Gentoo repository. Shotcut
 is © Meltytech, LLC, licensed under GPL-3+.
+
+Ironwail is by Andrei Drexler, based on QuakeSpasm, FitzQuake and id Software's Quake,
+licensed under GPL-2+.
+
+BlastEm is by Michael Pavone, licensed under GPL-3+.
