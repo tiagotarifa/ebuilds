@@ -1,0 +1,65 @@
+Upstream's CMakeLists.txt enables every music codec whose library pkg-config
+finds, so the build depends on whatever happens to be installed. Put each
+codec behind a USE_CODEC_<NAME> option (default ON, as before) so that the
+ebuild can map them to USE flags.
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 14c6950..b129174 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -14,16 +14,38 @@ find_package(CURL)
+ 
+ find_package(PkgConfig)
+ 
++option(USE_CODEC_MP3 "MP3 music through libmpg123 (or libmad)" ON)
++option(USE_CODEC_OPUS "Opus music through opusfile" ON)
++option(USE_CODEC_FLAC "FLAC music through libFLAC" ON)
++option(USE_CODEC_VORBIS "Ogg Vorbis music through libvorbisfile (or Tremor)" ON)
++option(USE_CODEC_MIKMOD "Tracker music through libmikmod" ON)
++option(USE_CODEC_MODPLUG "Tracker music through libmodplug" ON)
++option(USE_CODEC_XMP "Tracker music through libxmp" ON)
++
+ if (PKG_CONFIG_FOUND)
+-    pkg_check_modules(PC_MPG123 IMPORTED_TARGET libmpg123)
+-    pkg_check_modules(PC_MAD IMPORTED_TARGET mad)
+-    pkg_check_modules(PC_OPUSFILE IMPORTED_TARGET opusfile)
+-    pkg_check_modules(PC_FLAC IMPORTED_TARGET flac)
+-    pkg_check_modules(PC_VORBISFILE IMPORTED_TARGET vorbisfile)
+-    pkg_check_modules(PC_TREMOR IMPORTED_TARGET vorbisidec)
+-    pkg_check_modules(PC_MIKMOD IMPORTED_TARGET libmikmod)
+-    pkg_check_modules(PC_MODPLUG IMPORTED_TARGET libmodplug)
+-    pkg_check_modules(PC_XMP IMPORTED_TARGET libxmp)
++    if (USE_CODEC_MP3)
++        pkg_check_modules(PC_MPG123 IMPORTED_TARGET libmpg123)
++        pkg_check_modules(PC_MAD IMPORTED_TARGET mad)
++    endif()
++    if (USE_CODEC_OPUS)
++        pkg_check_modules(PC_OPUSFILE IMPORTED_TARGET opusfile)
++    endif()
++    if (USE_CODEC_FLAC)
++        pkg_check_modules(PC_FLAC IMPORTED_TARGET flac)
++    endif()
++    if (USE_CODEC_VORBIS)
++        pkg_check_modules(PC_VORBISFILE IMPORTED_TARGET vorbisfile)
++        pkg_check_modules(PC_TREMOR IMPORTED_TARGET vorbisidec)
++    endif()
++    if (USE_CODEC_MIKMOD)
++        pkg_check_modules(PC_MIKMOD IMPORTED_TARGET libmikmod)
++    endif()
++    if (USE_CODEC_MODPLUG)
++        pkg_check_modules(PC_MODPLUG IMPORTED_TARGET libmodplug)
++    endif()
++    if (USE_CODEC_XMP)
++        pkg_check_modules(PC_XMP IMPORTED_TARGET libxmp)
++    endif()
+ endif()
+ 
+ if (WIN32)
+@@ -99,6 +121,7 @@ if (ENABLE_USERDIRS)
+ 	target_compile_definitions(ironwail PRIVATE DO_USERDIRS=1)
+ endif()
+ 
++
+ if (PC_MPG123_FOUND)
+ 	target_compile_definitions(ironwail PRIVATE USE_CODEC_MP3)
+     target_link_libraries(ironwail PUBLIC PkgConfig::PC_MPG123)

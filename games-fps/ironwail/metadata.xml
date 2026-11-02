@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>tiagotarifa@gmail.com</email>
+		<name>Tiago Tarifa Munhoz</name>
+	</maintainer>
+	<longdescription lang="en">
+		Ironwail is a fork of the QuakeSpasm Quake engine focused on high
+		performance: culling and lightmap updates run on the GPU (OpenGL 4.3
+		compute shaders), and the renderer is decoupled from the server. It adds
+		a Mods menu, mouse-driven menus, Q64-style HUDs, real-time palettization
+		and plays the 2021 re-release content with no setup.
+	</longdescription>
+	<use>
+		<flag name="curl">Download add-ons of the 2021 re-release through <pkg>net-misc/curl</pkg></flag>
+		<flag name="mikmod">Play tracker (and UMX) music through <pkg>media-libs/libmikmod</pkg></flag>
+		<flag name="modplug">Play tracker (and UMX) music through <pkg>media-libs/libmodplug</pkg></flag>
+		<flag name="mp3">Play MP3 music through <pkg>media-sound/mpg123-base</pkg></flag>
+		<flag name="xmp">Play tracker (and UMX) music through <pkg>media-libs/libxmp</pkg></flag>
+	</use>
+	<upstream>
+		<remote-id type="github">andrei-drexler/ironwail</remote-id>
+		<bugs-to>https://github.com/andrei-drexler/ironwail/issues</bugs-to>
+	</upstream>
+</pkgmetadata>

@@ -1,0 +1,39 @@
+ironwail.pak (default config, menu graphics) is only looked up next to the
+executable, in the current directory and in the Quake base directories, so an
+ironwail installed in /usr/bin can't find it. Add an IRONWAIL_DATADIR CMake
+cache variable, compiled in as a last fallback location for the pak.
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b129174..c6c798b 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -121,6 +121,10 @@ if (ENABLE_USERDIRS)
+ 	target_compile_definitions(ironwail PRIVATE DO_USERDIRS=1)
+ endif()
+ 
++set(IRONWAIL_DATADIR "" CACHE PATH "Extra directory searched for ironwail.pak")
++if (IRONWAIL_DATADIR)
++	target_compile_definitions(ironwail PRIVATE IRONWAIL_DATADIR="${IRONWAIL_DATADIR}")
++endif()
+ 
+ if (PC_MPG123_FOUND)
+ 	target_compile_definitions(ironwail PRIVATE USE_CODEC_MP3)
+diff --git a/Quake/common.c b/Quake/common.c
+index c0330c0..a72ac80 100644
+--- a/Quake/common.c
++++ b/Quake/common.c
+@@ -2476,6 +2476,14 @@ static void COM_AddEnginePak (void)
+ 		}
+ 	}
+ 
++#ifdef IRONWAIL_DATADIR
++	if (!pak)
++	{
++		q_snprintf (pakfile, sizeof(pakfile), "%s/" ENGINE_PAK, IRONWAIL_DATADIR);
++		pak = COM_LoadPackFile (pakfile);
++	}
++#endif
++
+ 	if (pak)
+ 	{
+ 		searchpath_t *search = (searchpath_t *) Z_Malloc(sizeof(searchpath_t));
