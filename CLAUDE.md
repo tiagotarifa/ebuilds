@@ -43,9 +43,10 @@ and BlastEm. Public repository: see [Privacy](#privacy) before committing anythi
 - epsonscan2 USE flags: `gui` (Qt6 front-end; off → SANE driver only, no Qt) and `wifi` (default off;
   `PDEPEND` on the proprietary plugin plus `net-dns/avahi[dbus]`). Without `wifi` everything
   installed must stay free software.
-- The Epson builds must respect user flags and work with `-O3 -march=native -pipe`; never
-  re-add hardcoded `-O`/`-std` flags. Brave follows `www-client/chromium` instead: user
-  flags are filtered unless `USE=custom-cflags`.
+- Every build must respect the user's `CFLAGS`/`LDFLAGS` and work with
+  `-O3 -march=native -pipe`; never re-add hardcoded `-O`/`-std` flags (e.g. BlastEm's
+  `-O2 -flto`). Brave follows `www-client/chromium` instead: user flags are filtered unless
+  `USE=custom-cflags`.
 
 ## Upstream facts that are easy to miss
 
@@ -153,7 +154,8 @@ and BlastEm. Public repository: see [Privacy](#privacy) before committing anythi
 
 Use the `test-ebuild` skill: it runs `ebuild … clean install` as a normal user with a
 private `PORTAGE_TMPDIR` under `.work/` (git-ignored) and `DISTDIR=fontes/`. Test every USE
-combination and check QA notices. Never use `sudo`/`su`/root and never run a real
+combination, check QA notices, `scanelf -n` (no automagic dependencies) and
+`pkgcheck scan`. Never use `sudo`/`su`/root and never run a real
 `emerge` (only `emerge -p`, which asks for permission); installing is left to the user.
 Brave's `pnpm run init` fails with a `PORTAGE_TMPDIR` under `.work/`: `tsx` creates a Unix
 socket in `${T}` and the path exceeds 108 characters. Use a short one such as

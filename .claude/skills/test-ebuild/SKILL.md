@@ -35,10 +35,13 @@ browser (Epson's CDN returns 403 to scripts); `pkg_nofetch` in the ebuild says f
 
 ## 2. Build and install into the image
 
-For each USE combination that matters (epsonscan2: `-gui -wifi`, `gui`, `wifi`):
+For each USE combination that matters. The combinations of every package are listed in
+`PACKAGES` in `tools/auto-update/auto-update.py` (e.g. epsonscan2: `-gui -wifi`, `gui`,
+`wifi`); for a new package, cover at least the defaults, everything off and everything on,
+and add it there.
 
 ```sh
-cd media-gfx/<pkg>
+cd <category>/<pkg>
 USE="<flags>" CFLAGS="-O3 -march=native -pipe" CXXFLAGS="-O3 -march=native -pipe" \
 	ebuild <pkg>-<ver>.ebuild clean install > "$EBUILD_TEST_DIR/<pkg>-<flags>.log" 2>&1
 ```
@@ -58,24 +61,36 @@ sed 's/\x1b\[[0-9;]*m//g' "$EBUILD_TEST_DIR/<pkg>-<flags>.log" | grep -A6 "QA No
   soname for a dependency that isn't installed on the test machine (see step 4).
 - Treat `-Wreturn-type`, `-Waggressive-loop-optimizations` and similar "severe warnings"
   as bugs: with `-O3` they cause real miscompilations. Patch them.
-- Check the installed tree in `$PORTAGE_TMPDIR/portage/media-gfx/<pkg>-<ver>/image/` and
-  `readelf -d` (NEEDED, RUNPATH = `/usr/lib64/epsonscan2/`) on the libraries.
+- Check the installed tree in `$PORTAGE_TMPDIR/portage/<category>/<pkg>-<ver>/image/`.
+- Run `scanelf -n` on the installed binaries for each USE combination: a flag that is off
+  must remove its library from NEEDED (otherwise the dependency is automagic and needs a
+  patch or a configure switch), and libraries pulled in only by `pkg-config` output must
+  disappear under the default `-Wl,--as-needed` (otherwise `LDFLAGS` end up after the
+  libraries on the link line). For epsonscan2 also check `readelf -d` on the libraries
+  (RUNPATH = `/usr/lib64/epsonscan2/`).
 
 ## 3. Check metadata and dependency resolution
+
+```sh
+pkgcheck scan <category>/<pkg>
+```
+
+Fix what it reports (missing USE defaults in dependencies, outdated `PYTHON_COMPAT`, …).
 
 `emerge` always asks for permission (see `.claude/settings.json`); only ever run it with `-p`.
 
 ```sh
-portageq metadata / ebuild media-gfx/<pkg>-<ver>::tiagotarifa IUSE RDEPEND PDEPEND
-ACCEPT_KEYWORDS="~amd64" ACCEPT_LICENSE="*" USE="<flags>" emerge -pv media-gfx/<pkg>::tiagotarifa
+portageq metadata / ebuild <category>/<pkg>-<ver>::tiagotarifa IUSE RDEPEND PDEPEND
+ACCEPT_KEYWORDS="~amd64" ACCEPT_LICENSE="*" USE="<flags>" emerge -pv <category>/<pkg>::tiagotarifa
 ```
 
 ## 4. Dependencies that aren't installed
 
-If a build dependency is missing on the test machine and can't be emerged without root,
-build it from its upstream source into a prefix under `.work/` and inject it **only for
-the test** (`CXXFLAGS="… -I<prefix>/include"`, `LDFLAGS="… -L<prefix>/lib64"`). Never
-change the ebuild to point at it.
+If a build dependency is missing on the test machine, stop and ask the user to install it
+with `emerge` (they have root; say which USE flags it needs, if any). Only if they prefer
+not to, and they authorise it, build it from its upstream source into a prefix under
+`.work/` and inject it **only for the test** (`CXXFLAGS="… -I<prefix>/include"`,
+`LDFLAGS="… -L<prefix>/lib64"`). Never change the ebuild to point at it.
 
 ## 5. Runtime tests
 

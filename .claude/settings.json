@@ -12,7 +12,10 @@
       "Bash(tar -t:*)",
       "Bash(tar -tzf:*)",
       "Bash(bsdtar -t:*)",
-      "Bash(scanimage -L:*)"
+      "Bash(scanimage -L:*)",
+      "Bash(pkgcheck scan:*)",
+      "Bash(scanelf:*)",
+      "Bash(pkg-config:*)"
     ],
     "ask": [
       "Bash(git push:*)",

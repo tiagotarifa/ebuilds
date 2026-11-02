@@ -3,3 +3,4 @@
 /.work
 /CLAUDE.local.md
 /.claude/settings.local.json*
+/metadata/md5-cache
