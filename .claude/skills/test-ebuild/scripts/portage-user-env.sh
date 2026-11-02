@@ -42,6 +42,8 @@ location = ${repo}
 	# The sandboxes and privilege dropping need root; distlocks would write into DISTDIR.
 	export FEATURES="-userpriv -usersandbox -sandbox -ipc-sandbox -network-sandbox -pid-sandbox -mount-sandbox -userfetch -distlocks"
 	export PORTAGE_USERNAME=$(id -un) PORTAGE_GRPNAME=$(id -gn)
+	# dobin, doins, ... run install -o/-g with these (default root)
+	export PORTAGE_INST_UID=$(id -u) PORTAGE_INST_GID=$(id -g)
 
 	echo "Portage user environment ready: ${EBUILD_TEST_DIR}"
 }
