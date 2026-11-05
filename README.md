@@ -10,7 +10,8 @@ Gentoo overlay with:
   frontends;
 - **Shotcut**, the video editor, newer than the version in the Gentoo repository;
 - **Ironwail**, a high-performance Quake engine (fork of QuakeSpasm);
-- **BlastEm**, an accurate Sega Genesis/Mega Drive emulator.
+- **BlastEm**, an accurate Sega Genesis/Mega Drive emulator;
+- **OpenBOR**, a 2D beat 'em up game engine (Beats of Rage continuation).
 
 > [!CAUTION]
 > **USE AT YOUR OWN RISK.** This is a personal overlay, not part of Gentoo and not
@@ -33,6 +34,7 @@ Gentoo overlay with:
 | [`media-video/shotcut`](media-video/shotcut/README.md) | Shotcut video editor, a version bump of the Gentoo ebuild. |
 | [`games-fps/ironwail`](games-fps/ironwail/README.md) | Ironwail Quake engine (QuakeSpasm fork). Needs your own Quake game data. |
 | [`games-emulation/blastem`](games-emulation/blastem/README.md) | BlastEm Sega Genesis/Mega Drive, Sega CD and 32X emulator. |
+| [`games-engines/openbor`](games-engines/openbor/README.md) | OpenBOR 2D beat 'em up engine. Games (`.pak` modules) not included. |
 
 ## Adding the overlay
 
@@ -81,3 +83,6 @@ Ironwail is by Andrei Drexler, based on QuakeSpasm, FitzQuake and id Software's 
 licensed under GPL-2+.
 
 BlastEm is by Michael Pavone, licensed under GPL-3+.
+
+OpenBOR is by the OpenBOR Team, based on Senile Team's Beats of Rage, licensed under
+BSD-3-Clause.

@@ -1,7 +1,7 @@
 # CLAUDE.md
 
-Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2, Brave, AppleWin, Shotcut, Ironwail
-and BlastEm. Public repository: see [Privacy](#privacy) before committing anything.
+Gentoo overlay (repo name `tiagotarifa`) for Epson Scan 2, Brave, AppleWin, Shotcut, Ironwail,
+BlastEm and OpenBOR. Public repository: see [Privacy](#privacy) before committing anything.
 
 ## Layout
 
@@ -20,6 +20,8 @@ and BlastEm. Public repository: see [Privacy](#privacy) before committing anythi
 - `games-fps/ironwail/` — Ironwail (Quake engine), CMake, from GitHub release tags.
 - `games-emulation/blastem/` — BlastEm (Genesis emulator), plain Makefile, from the `vX.Y.Z`
   tags of upstream's Mercurial repository (hgweb `archive/` tarball).
+- `games-engines/openbor/` — OpenBOR (2D beat 'em up engine), plain Makefile in `engine/`,
+  from GitHub release tags `v<build>`; PV is upstream's `<major>.<minor>.<build>` (4.0.7533).
 - `metadata/layout.conf` — `thin-manifests = true`: Manifests only hold `DIST` lines.
 - Each package has a `README.md` for end users; the root `README.md` links to them.
 - `fontes/` (git-ignored) holds the distfiles; they can't be committed or redistributed.
@@ -150,6 +152,19 @@ and BlastEm. Public repository: see [Privacy](#privacy) before committing anythi
 - BlastEm's GTK file chooser is `dlopen()`ed; `pkg-config gtk+-3.0` at build time is what
   enables it (automagic upstream, controlled by `USE=gtk` through `GTKFLAGS`/`CHOOSER`).
 
+## OpenBOR facts that are easy to miss
+
+- `version.sh` asks for the build number interactively outside a git checkout, so the ebuild
+  writes `version.h` itself.
+- The Makefile appends to `CFLAGS` (`+=`): pass them through the environment, never on the
+  `make` command line. `CC`, `INCLUDES` and `LIBRARIES` default to cross-SDK paths
+  (`/gcc`, `-I/include`, an rpath) and must be overridden; `NO_STRIP=1` avoids stripping.
+- `-std=gnu99` stays: the code has pre-C23 unprototyped declarations (`f()` called with
+  arguments) that GCC's default C23 rejects.
+- `Paks/`, `Saves/`, `Logs/` and `ScreenShots/` are relative to the current directory, hence
+  the `files/openbor` launcher (cd to `${XDG_DATA_HOME:-~/.local/share}/openbor`, binary in
+  `/usr/libexec/openbor`). All resources are embedded in the binary.
+
 ## Testing
 
 Use the `test-ebuild` skill: it runs `ebuild … clean install` as a normal user with a
@@ -164,7 +179,7 @@ socket in `${T}` and the path exceeds 108 characters. Use a short one such as
 ## Automation
 
 `tools/auto-update/auto-update.py` (run weekly from cron by `cron.sh`) checks upstream for new
-releases: GitHub for Brave, Shotcut, Ironwail and AppleWin (release tags only, not `master`),
+releases: GitHub for Brave, Shotcut, Ironwail, OpenBOR and AppleWin (release tags only, not `master`),
 BlastEm's hgweb `raw-tags`, the AUR as a proxy for Epson (its site rejects scripts; Epson bumps
 start once the user puts the distfiles in `fontes/`). For each package with a new release it
 works in a git worktree (`.work/auto-update/wt/`) on a branch `auto-update/<pn>-<version>`.

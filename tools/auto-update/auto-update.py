@@ -75,6 +75,7 @@ PACKAGES = {
         "uses": ["", "-curl -mp3 -vorbis flac mikmod modplug opus xmp"],
     },
     "games-emulation/blastem": {"uses": ["-gtk", "gtk"]},
+    "games-engines/openbor": {"uses": [""]},
     "media-gfx/epsonscan2": {"uses": ["-gui -wifi", "gui", "wifi"]},
     "media-gfx/epsonscan2-non-free-plugin": {"uses": [""]},
     # Last: the build takes hours. tsx needs a short PORTAGE_TMPDIR (CLAUDE.md).
@@ -226,6 +227,27 @@ def check_blastem(pkgdir, notices):
     return best
 
 
+def check_openbor(pkgdir, notices):
+    # Tags are the build number (v7533); PV is <major>.<minor>.<build> from version.sh
+    current = ebuilds(pkgdir)[-1][0]
+    rel = fetch_json("https://api.github.com/repos/DCurrent/openbor/releases/latest")
+    m = re.fullmatch(r"v(\d+)", rel["tag_name"])
+    if rel.get("prerelease") or rel.get("draft") or not m:
+        return None
+    if int(m.group(1)) <= int(current.rsplit(".", 1)[-1]):
+        return None
+    script = fetch(f"https://raw.githubusercontent.com/DCurrent/openbor/"
+                   f"{rel['tag_name']}/engine/version.sh")
+    major = re.search(r"^VERSION_MAJOR=(\d+)", script, re.M)
+    minor = re.search(r"^VERSION_MINOR=(\d+)", script, re.M)
+    if not (major and minor):
+        notices.append(f"games-engines/openbor: {rel['tag_name']} is out, but its "
+                       "engine/version.sh has no VERSION_MAJOR/VERSION_MINOR; bump by hand.")
+        return None
+    ver = f"{major.group(1)}.{minor.group(1)}.{m.group(1)}"
+    return {"version": ver, "tag": rel["tag_name"]} if newer(ver, current) else None
+
+
 def aur_version(name):
     res = fetch_json(f"https://aur.archlinux.org/rpc/v5/info?arg[]={name}")["results"]
     return res[0]["Version"].rsplit("-", 1)[0] if res else None
@@ -271,6 +293,7 @@ CHECKS = {
     "media-video/shotcut": check_shotcut,
     "games-fps/ironwail": check_ironwail,
     "games-emulation/blastem": check_blastem,
+    "games-engines/openbor": check_openbor,
     "media-gfx/epsonscan2": check_epsonscan2,
     "media-gfx/epsonscan2-non-free-plugin": check_plugin,
     "www-client/brave-browser": check_brave,
@@ -346,6 +369,7 @@ PREPARES = {
     "media-video/shotcut": prepare_simple,
     "games-fps/ironwail": prepare_simple,
     "games-emulation/blastem": prepare_simple,
+    "games-engines/openbor": prepare_simple,
     "media-gfx/epsonscan2": prepare_simple,
     "media-gfx/epsonscan2-non-free-plugin": prepare_plugin,
     "www-client/brave-browser": prepare_brave,
