@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>tiagotarifa@gmail.com</email>
+		<name>Tiago Tarifa Munhoz</name>
+	</maintainer>
+	<longdescription lang="en">
+		OpenBOR is a royalty-free, sprite-based side-scrolling game engine,
+		descended from Senile Team's Beats of Rage. It is optimised for beat 'em
+		up games (Double Dragon, Streets of Rage, Final Fight style) but its
+		script engine allows other genres. Games are distributed as .pak
+		modules, which are not included.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">DCurrent/openbor</remote-id>
+		<bugs-to>https://github.com/DCurrent/openbor/issues</bugs-to>
+	</upstream>
+</pkgmetadata>

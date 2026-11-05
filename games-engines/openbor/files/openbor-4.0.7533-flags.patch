@@ -1,0 +1,75 @@
+The Linux build of engine/Makefile forces -O2, -g, -Werror, -fno-ident and
+-freorder-blocks after the user's CFLAGS, never passes LDFLAGS to the link,
+calls pkg-config by name, adds a broken include path (a quoted, never
+executed 'libpng-config --prefix') and hides the compiler command lines.
+Drop the forced flags, use $(PKG_CONFIG) and $(LDFLAGS), and show the
+commands. -std=gnu99 stays: the code relies on pre-C23 unprototyped
+declarations, which GCC's default C23 rejects. Also skip -Wl,-rpath when
+LIBRARIES (the SDK library directories) is empty: -rpath,"" leaves an empty
+RUNPATH in the binary.
+
+diff --git a/Makefile b/Makefile
+index 69d2974..4430026 100644
+--- a/Makefile
++++ b/Makefile
+@@ -278,11 +278,6 @@ INCS           += sdl
+ endif
+ 
+ 
+-ifdef BUILD_LINUX
+-INCS           += 'libpng-config --prefix'/include/libpng
+-endif
+-
+-
+ INCS 	       += .                                                                                 \
+                   source                                                                            \
+                   source/adpcmlib                                                                   \
+@@ -498,18 +493,17 @@ OBJS            = $(MAIN)
+ #----------------------------------------------------------------------------------------------------
+ 
+ CFLAGS 	       += $(addprefix -I", $(addsuffix ", $(INCS))) $(ARCHFLAGS) -D$(TARGET_PLATFORM)
+-CFLAGS 	       += -g -Wall -Werror -Wno-format-truncation -Wno-stringop-truncation -fsigned-char -std=gnu99
++CFLAGS 	       += -Wall -Wno-format-truncation -Wno-stringop-truncation -fsigned-char -std=gnu99
+ 
+ 
+ ifndef BUILD_DARWIN
+ ifdef BUILD_LINUX
+-CFLAGS         += -Wno-unused-result `pkg-config sdl2 --cflags`
++PKG_CONFIG     ?= pkg-config
++CFLAGS         += -Wno-unused-result `$(PKG_CONFIG) sdl2 --cflags`
+ endif
+ endif
+ 
+ ifndef BUILD_DEBUG
+-CFLAGS 	       += -O2
+-CFLAGS 	       += -fno-ident -freorder-blocks
+ ifndef BUILD_AMD64
+ CFLAGS         += -fomit-frame-pointer
+ endif
+@@ -624,7 +618,7 @@ ifeq ($(findstring DGE, $(SDKPATH)), DGE)
+ LIBS           += -lSDL -lSDL_gfx -lts # Kratus (01-2023) Added a FPS limit option in the video settings
+ else
+ COMMA		=,
+-RPATH_LIBS	= $(addprefix -Wl$(COMMA)-rpath$(COMMA),"$(LIBRARIES)")
++RPATH_LIBS	= $(if $(strip $(LIBRARIES)),$(addprefix -Wl$(COMMA)-rpath$(COMMA),"$(LIBRARIES)"))
+ LIBS	       += $(RPATH_LIBS) -lSDL2 -lSDL2_gfx # Kratus (01-2023) Added a FPS limit option in the video settings
+ 
+ ifdef CROSSCOMPILE_LINUX_WIN
+@@ -714,14 +708,14 @@ all : $(TARGET) $(TARGET_FINAL)
+ 	@echo
+ %.o : %.asm
+ 	@echo Compiling $(TARGET_PLATFORM) Port: $<...
+-	@$(YASM) -D $(TARGET_PLATFORM) -f $(OBJTYPE) -m $(TARGET_ARCH) -o $@ $<
++	$(YASM) -D $(TARGET_PLATFORM) -f $(OBJTYPE) -m $(TARGET_ARCH) -o $@ $<
+ %.o : %.c
+ 	@echo Compiling $(TARGET_PLATFORM) Port: $<...
+-	@$(CC) $(CFLAGS) -c $< -o $@
++	$(CC) $(CFLAGS) -c $< -o $@
+ $(TARGET) : $(OBJS) $(RES)
+ 	@echo
+ 	@echo Linking $(TARGET_PLATFORM) Port: $(TARGET)...
+-	@$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(TARGET_RESOURCE) $(LIBS)
++	$(CC) $(CFLAGS) $(LDFLAGS) -o $(TARGET) $(OBJS) $(TARGET_RESOURCE) $(LIBS)
+ $(TARGET_FINAL) : $(TARGET)
+ 	@echo Stripping $(TARGET_PLATFORM) Port: $(TARGET_FINAL)...
+ 	@$(STRIP)

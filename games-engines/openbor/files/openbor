@@ -1,0 +1,13 @@
+#!/bin/sh
+# OpenBOR reads and writes Paks/, Saves/, Logs/ and ScreenShots/ in the current
+# directory: run it from a per-user directory.
+dir="${XDG_DATA_HOME:-${HOME}/.local/share}/openbor"
+mkdir -p "${dir}" || exit 1
+
+# A .pak given on the command line must survive the cd
+if [ $# -eq 1 ] && [ -f "$1" ]; then
+	set -- "$(realpath -- "$1")"
+fi
+
+cd "${dir}" || exit 1
+exec /usr/libexec/openbor/OpenBOR "$@"
