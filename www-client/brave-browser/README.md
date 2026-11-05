@@ -65,7 +65,8 @@ Defaults follow upstream's Linux build.
 
 Brave's Commander, Containers, custom New Tab backgrounds, local AI models, Request-OTR and
 Widevine support are always built: other code references them unconditionally (Brave still
-asks before downloading the Widevine CDM). VPN does not exist on Linux.
+asks before downloading the Widevine CDM, and that download fails: see
+[Extensions and components](#extensions-and-components)). VPN does not exist on Linux.
 
 The build always uses upstream's prebuilt Clang and Rust: Chromium 156 builds the Rust
 standard library and its C++ bindings itself, which the system Rust can't provide.
@@ -110,6 +111,18 @@ BRAVE_SERVICE_KEY_SEARCH="..."
 BRAVE_SERVICE_KEY_STT="..."
 BRAVE_SERVICE_KEY_AICHAT="..."
 ```
+
+## Extensions and components
+
+Extensions and Brave components that are downloaded at runtime don't work: this build
+doesn't have the public and private keys Brave Software uses when it builds the official
+browser, so trying to download one ends in "access denied". Examples:
+
+- the translator (Brave Translate);
+- the Widevine audio/video plugin, needed by Spotify and other streaming sites with DRM;
+- other extensions and components fetched from Brave's servers.
+
+This is a limitation of unofficial builds; no USE flag changes it.
 
 ## Running
 
