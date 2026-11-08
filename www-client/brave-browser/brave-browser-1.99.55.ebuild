@@ -10,6 +10,10 @@
 # patches, and upstream's prebuilt Clang/Rust). src_unpack runs it, which is
 # why this ebuild is PROPERTIES="live": Portage only allows network access in
 # src_unpack for live ebuilds. Everything after src_unpack builds offline.
+#
+# The result is cached as a tarball in DISTDIR/brave-browser-src (see
+# brave_src_tarball); later builds of the same version unpack it instead of
+# downloading everything again, and need no network at all.
 
 EAPI=8
 
@@ -27,7 +31,7 @@ inherit python-any-r1 xdg
 # brave-core's devEngines: Node 24 and pnpm >= 11.11 (hard failure otherwise)
 NODE_VER="24.22.1"
 PNPM_VER="11.28.7"
-CHROMIUM_VER="156.0.8078.48"
+CHROMIUM_VER="157.0.8103.39"
 
 DESCRIPTION="Brave web browser, built from source"
 HOMEPAGE="https://brave.com/ https://github.com/brave/brave-core"
@@ -54,7 +58,7 @@ IUSE_BRAVE="+ads +ai-chat +education +news origin +page-graph +playlist +psst
 IUSE="${IUSE_CHROMIUM} ${IUSE_BRAVE}"
 
 PROPERTIES="live"
-# Proprietary codecs and prebuilt toolchains; the sources are never stored
+# Proprietary codecs and prebuilt toolchains; the cached sources stay local
 RESTRICT="bindist mirror test"
 
 REQUIRED_USE="
@@ -137,6 +141,7 @@ BDEPEND="
 		dev-python/setuptools[${PYTHON_USEDEP}]
 	')
 	app-alternatives/ninja
+	app-arch/zstd
 	dev-lang/perl
 	>=dev-util/gperf-3.2
 	dev-vcs/git
@@ -176,11 +181,60 @@ pkg_setup() {
 	chromium_suid_sandbox_check_kernel_config
 }
 
+# The cached source tree: src/ as left by `pnpm run init` without VCS data,
+# plus pnpm and its store (pnpm/, pnpm-store/), relative to WORKDIR. It lives
+# in a subdirectory of the real DISTDIR (the one Portage gives the phases only
+# holds SRC_URI files) so that eclean-dist leaves it alone, like git-r3's
+# git3-src. Delete it to download the sources again.
+brave_src_tarball() {
+	echo "${PORTAGE_ACTUAL_DISTDIR:-${DISTDIR}}/brave-browser-src/${P}-src.tar.zst"
+}
+
+# Node, pnpm and pnpm's store, for src_unpack and the build phases
+brave_node_env() {
+	export PATH="${WORKDIR}/pnpm/bin:${WORKDIR}/node-v${NODE_VER}-linux-x64/bin:${PATH}"
+	export npm_config_cache="${T}/npm-cache"
+	export pnpm_config_store_dir="${WORKDIR}/pnpm-store"
+}
+
+brave_create_tarball() {
+	local tarball=$(brave_src_tarball)
+	local dir=${tarball%/*}
+
+	addwrite "${dir}"
+	if ! mkdir -p "${dir}" || [[ ! -w ${dir} ]]; then
+		ewarn "Can't write to ${dir}: the sources won't be cached."
+		return
+	fi
+
+	einfo "Caching the sources in ${tarball} ..."
+	local paths=( src pnpm )
+	[[ -d ${WORKDIR}/pnpm-store ]] && paths+=( pnpm-store )
+	# Written aside and renamed when complete, so an interrupted build never
+	# leaves a truncated tarball behind.
+	if tar -C "${WORKDIR}" --sort=name --owner=0 --group=0 --numeric-owner \
+		-I "zstd -T0 -10" -cf "${tarball}.tmp" "${paths[@]}" &&
+		mv "${tarball}"{.tmp,}
+	then
+		elog "Sources cached in ${tarball}; delete it to download them again"
+		elog "and delete old versions by hand."
+	else
+		rm -f "${tarball}.tmp"
+		ewarn "Failed to cache the sources in ${tarball} (out of space?)."
+	fi
+}
+
 src_unpack() {
 	unpack node-v${NODE_VER}-linux-x64.tar.xz
-	local tools="${WORKDIR}/node-v${NODE_VER}-linux-x64"
-	export PATH="${tools}/bin:${PATH}"
-	export npm_config_cache="${T}/npm-cache"
+	brave_node_env
+
+	local tarball=$(brave_src_tarball)
+	if [[ -f ${tarball} ]]; then
+		einfo "Unpacking the cached sources from ${tarball} ..."
+		tar -C "${WORKDIR}" -I zstd -xf "${tarball}" ||
+			die "Failed to unpack ${tarball}; delete it to download the sources again"
+		return
+	fi
 
 	# gclient resets whatever repository it finds at src/: never let git
 	# climb out of the build directory into an enclosing checkout.
@@ -188,7 +242,8 @@ src_unpack() {
 	export DEPOT_TOOLS_UPDATE=0 DEPOT_TOOLS_METRICS=0
 
 	einfo "Installing pnpm ${PNPM_VER} ..."
-	npm install -g --prefix "${tools}" "pnpm@${PNPM_VER}" || die "Failed to install pnpm"
+	npm install -g --prefix "${WORKDIR}/pnpm" "pnpm@${PNPM_VER}" ||
+		die "Failed to install pnpm"
 
 	einfo "Fetching brave-core v${PV} ..."
 	git clone --depth 1 -b "v${PV}" https://github.com/brave/brave-core.git "${S}/brave" ||
@@ -214,6 +269,8 @@ src_unpack() {
 	einfo "Removing VCS data ..."
 	find "${S}" -path "${S}/brave/vendor/web-discovery-project/.git" -prune \
 		-o -name .git -prune -exec rm -rf {} + || die
+
+	brave_create_tarball
 }
 
 src_prepare() {
@@ -233,10 +290,11 @@ src_prepare() {
 		is_brave_origin_branded=$(usex origin true false)
 	EOF
 	pushd brave > /dev/null || die
-	PATH="${WORKDIR}/node-v${NODE_VER}-linux-x64/bin:${PATH}" \
+	(
+		brave_node_env
 		node build/commands/scripts/build.ts Release --prepare_only \
-		--target_os=linux --target_arch=x64 > "${T}"/branding.log ||
-		die "Failed to apply Brave's branding (see ${T}/branding.log)"
+			--target_os=linux --target_arch=x64 > "${T}"/branding.log
+	) || die "Failed to apply Brave's branding (see ${T}/branding.log)"
 	popd > /dev/null || die
 
 	# Allow building against system libraries in official builds
@@ -297,7 +355,7 @@ brave_build_env() {
 
 	# brave/script/web_discovery_project.py runs pnpm. Its package.json asks
 	# for another pnpm release (packageManager), which pnpm would download.
-	export PATH="${WORKDIR}/node-v${NODE_VER}-linux-x64/bin:${PATH}"
+	brave_node_env
 	export pnpm_config_pm_on_fail=ignore
 }
 
