@@ -1,0 +1,109 @@
+Use a private work folder per process. Upstream puts its temporary files in
+/tmp/epsonWork, created 0755 by whoever scans first, so every other user
+crashed with SIGSEGV when saving the image: the failure went unnoticed
+(mkstemp() checked with !fd) and Saving dereferenced the NULL CESFile.
+Create the folder with mkdtemp() under $TMPDIR (or /tmp) instead, fix the
+mkstemp() check, a descriptor leak and a buffer one byte too short, and
+throw a write error from Saving. /tmp/epsonWork/interrupt.dat is kept: the
+prebuilt es2netif uses it for IPC.
+
+diff --git a/src/CommonUtility/utils/PathUtils.cpp b/src/CommonUtility/utils/PathUtils.cpp
+index f1fe8d3..869969a 100644
+--- a/src/CommonUtility/utils/PathUtils.cpp
++++ b/src/CommonUtility/utils/PathUtils.cpp
+@@ -7,6 +7,8 @@
+ #include <stdio.h>
+ #include <ftw.h>
+ #include <unistd.h>
++#include <stdlib.h>
++#include <sys/stat.h>
+ 
+ int UnlinkFile(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
+ {
+@@ -41,24 +43,23 @@ DWORD GetTempPath(DWORD nBufferLength, ESString& lpBuffer)
+ BOOL GetTempFileName(ESString DirName, ESString Prefix, LPTSTR TempFile)
+ {
+ 
++	ES_CMN_FUNCS::PATH::ES_AddBackYen(DirName);
+ 	size_t path_len = DirName.length() + Prefix.length() + strlen("XXXXXX");
+ 	char *buf = (char *)malloc(path_len + 1);
+ 
+ 	buf[path_len] = 0;
+-	ES_CMN_FUNCS::PATH::ES_AddBackYen(DirName);
+   	strcpy(buf, DirName.c_str());
+   	strcat(buf, Prefix.c_str());
+ 	strcat(buf, "XXXXXX");
+ 
+  	int fd = mkstemp(buf);
+-	if(!fd){
++	if(fd < 0){
+ 		free(buf);
+ 	   	return FALSE;
+ 	}
+- 	FILE* fp = fdopen(fd, "w");
+ 
+ 	memcpy(TempFile, buf, path_len+1);
+- 	fclose(fp);
++ 	close(fd);
+ 	free(buf);
+ 
+  	return TRUE;
+@@ -1109,13 +1110,24 @@ namespace ES_CMN_FUNCS
+ 
+ 		std::string ES_GetWorkTempPath() 
+ 		{
+-			pid_t c_pid;
+-			c_pid = getpid();
++			// EPSON_WORK_PATH is shared by every user and is created with
++			// mode 0755 by whoever scans first, locking all other users out.
++			// Use a private directory per process instead.
++			static const std::string work_path = []() {
++				const char* tmpdir = getenv("TMPDIR");
++				std::string tmpl = (tmpdir && tmpdir[0] == '/') ? tmpdir : "/tmp";
++				tmpl += "/epsonscan2-XXXXXX";
++				std::vector<char> buf(tmpl.begin(), tmpl.end());
++				buf.push_back('\0');
++				if (mkdtemp(buf.data()) == nullptr) {
++					return "/tmp/epsonscan2-" + std::to_string(getuid()) + "_" + std::to_string(getpid()) + "/";
++				}
++				return std::string(buf.data()) + "/";
++			}();
+ 
+-			std::string work_path = EPSON_WORK_PATH;
+-			work_path = work_path + "_";
+-			work_path = work_path + std::to_string(c_pid);
+-			work_path = work_path + "/";
++			// The work folder is deleted when a scan session ends; re-create
++			// it here as private, as the callers would make it world-readable
++			mkdir(work_path.c_str(), 0700);
+ 
+ 			return work_path;
+ 		}
+diff --git a/src/Controller/Src/Filter/Saving.hpp b/src/Controller/Src/Filter/Saving.hpp
+index 7df223b..1b46864 100644
+--- a/src/Controller/Src/Filter/Saving.hpp
++++ b/src/Controller/Src/Filter/Saving.hpp
+@@ -109,6 +109,11 @@ namespace epsonscan
+ 					if (imgFormat == kSDIImageFormatRaw)
+ 					{
+ 					    file = CESFile::CreateTempFileInstanceWithPrefix(ES_CMN_FUNCS::PATH::ES_GetWorkTempPath(),  prefixStream.str(), CESFile::ES_OPEN_MODE_WRITE_PLUS);
++						if (file == nullptr)
++						{
++							SDI_TRACE_LOG("cannot create a temporary file in %s", ES_CMN_FUNCS::PATH::ES_GetWorkTempPath().c_str());
++							throw RuntimeError("file create error", kSDIErrorWriteFile);
++						}
+ 						if(file->WriteData(inDataBuf) == false)
+ 						{
+ 							delete file;
+@@ -129,6 +134,11 @@ namespace epsonscan
+ 						}
+ 
+ 						file = CESFile::CreateTempFileInstanceWithPrefix(ES_CMN_FUNCS::PATH::ES_GetWorkTempPath(), prefixStream.str());
++						if (file == nullptr)
++						{
++							SDI_TRACE_LOG("cannot create a temporary file in %s", ES_CMN_FUNCS::PATH::ES_GetWorkTempPath().c_str());
++							throw RuntimeError("file create error", kSDIErrorWriteFile);
++						}
+ 						file->CloseFile();
+ 
+ 						if(ffMgr.Write(inDataBuf, // input buffer  

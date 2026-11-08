@@ -1,0 +1,188 @@
+Port the GUI (epsonscan2, detectalert) from Qt5 to Qt6:
+- find_package(Qt6) / Qt6:: targets instead of the removed QT5_USE_MODULES
+- QMatrix -> QTransform, QRegExp -> QRegularExpression,
+  QDesktopWidget -> QScreen, QPalette::Foreground -> QPalette::WindowText
+- install the binary to CMAKE_INSTALL_BINDIR instead of a hardcoded /usr/bin
+
+diff --git a/src/DetectAlert/CMakeLists.txt b/src/DetectAlert/CMakeLists.txt
+index dd52ca9..bfffeb7 100644
+--- a/src/DetectAlert/CMakeLists.txt
++++ b/src/DetectAlert/CMakeLists.txt
+@@ -24,9 +24,7 @@ set(CMAKE_AUTOMOC ON)
+ set(CMAKE_AUTOUIC ON)
+ set(CMAKE_AUTORCC ON)
+ 
+-find_package(Qt5Core REQUIRED)
+-find_package(Qt5Gui REQUIRED)
+-find_package(Qt5Widgets REQUIRED)
++find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+ 
+ INCLUDE_DIRECTORIES(
+ ../
+@@ -48,19 +46,15 @@ add_executable(detectalert
+    	${QRC_FILES}
+ )
+ 
+-if (${CMAKE_VERSION} LESS 3.0)
+-    qt5_wrap_ui(FORMS ${UI_FILES})
+-endif()
+ 
+ set_target_properties(detectalert PROPERTIES OUTPUT_NAME "detectalert")
+ 
+-target_link_libraries(detectalert ${QT_LIBRARIES}
++target_link_libraries(detectalert Qt6::Core Qt6::Gui Qt6::Widgets
+ 	pthread
+ 	dl
+ 	${Boost_LIBRARIES}	
+ 	commonutility
+ )
+ 
+-QT5_USE_MODULES(detectalert Widgets)
+ install(TARGETS detectalert DESTINATION "${EPSON_INSTALL_ROOT}${EPSON_INSTALL_PATH}")
+ 
+diff --git a/src/DetectAlert/detectalert.cpp b/src/DetectAlert/detectalert.cpp
+index 677d384..53ca566 100644
+--- a/src/DetectAlert/detectalert.cpp
++++ b/src/DetectAlert/detectalert.cpp
+@@ -1,7 +1,8 @@
+ #include "detectalert.h"
+ #include "translationstring.h"
+ 
+-#include <QDesktopWidget>
++#include <QGuiApplication>
++#include <QScreen>
+ #include <QGridLayout>
+ #include <QSpacerItem>
+ #include <QDir>
+@@ -38,7 +39,7 @@ void DetectAlert::CustomMessageBox(QString dialog_title, QString message, QStrin
+         //IconType icon = Information;
+         QMessageBox msgBox(this);
+ 
+-        QDesktopWidget desktop_info;
++        QRect desktop_info = QGuiApplication::primaryScreen()->availableGeometry();
+ 
+         msgBox.setIconPixmap(QPixmap(":/escan2_app.pngn"));
+         msgBox.setText(message);
+diff --git a/src/Standalone/CMakeLists.txt b/src/Standalone/CMakeLists.txt
+index 54c34c4..7f47a38 100644
+--- a/src/Standalone/CMakeLists.txt
++++ b/src/Standalone/CMakeLists.txt
+@@ -24,9 +24,7 @@ set(CMAKE_AUTOMOC ON)
+ set(CMAKE_AUTOUIC ON)
+ set(CMAKE_AUTORCC ON)
+ 
+-find_package(Qt5Core REQUIRED)
+-find_package(Qt5Gui REQUIRED)
+-find_package(Qt5Widgets REQUIRED)
++find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+ 
+ 
+ INCLUDE_DIRECTORIES(
+@@ -153,19 +151,14 @@ add_executable(es2standalone
+    	${QRC_FILES}
+ )
+ 
+-if (${CMAKE_VERSION} LESS 3.0)
+-    qt5_wrap_ui(FORMS ${UI_FILES})
+-    add_custom_target(uic_cmake28_compat ALL DEPENDS ${FORMS})
+-endif()
+ 
+ set_target_properties(es2standalone  PROPERTIES OUTPUT_NAME "epsonscan2")
+ 
+-target_link_libraries(es2standalone ${QT_LIBRARIES}
++target_link_libraries(es2standalone Qt6::Core Qt6::Gui Qt6::Widgets
+ 	pthread
+ 	dl	
+ 	commonutility
+ )
+ 
+-QT5_USE_MODULES(es2standalone Widgets)
+-install(TARGETS es2standalone DESTINATION "${EPSON_INSTALL_ROOT}/usr/bin")
++install(TARGETS es2standalone DESTINATION ${CMAKE_INSTALL_BINDIR})
+ 
+diff --git a/src/Standalone/continuousscandialog.cpp b/src/Standalone/continuousscandialog.cpp
+index 99a7883..f821556 100644
+--- a/src/Standalone/continuousscandialog.cpp
++++ b/src/Standalone/continuousscandialog.cpp
+@@ -34,7 +34,7 @@ void ContinuousScanDialog::Initialize(QString message, DoubleFeedMode dialog_typ
+ 
+     //文字色を変更
+     QPalette pal = ui->noimage_label->palette();
+-    pal.setColor(QPalette::Foreground, QColor("#FFFFFF"));
++    pal.setColor(QPalette::WindowText, QColor("#FFFFFF"));
+     ui->noimage_label->setPalette(pal);
+ 
+     this->ChangeStrings(dialog_type, message);
+diff --git a/src/Standalone/imageeditdialog.cpp b/src/Standalone/imageeditdialog.cpp
+index 90805c3..d43eff1 100644
+--- a/src/Standalone/imageeditdialog.cpp
++++ b/src/Standalone/imageeditdialog.cpp
+@@ -10,7 +10,7 @@
+ #include <QFileDialog>
+ #include <QMessageBox>
+ //#include <math.h>
+-#include <QMatrix>
++#include <QTransform>
+ #include <QTransform>
+ #include <QMimeData>
+ #include <QAbstractScrollArea>
+diff --git a/src/Standalone/imageeditview.cpp b/src/Standalone/imageeditview.cpp
+index 75c7fdf..8436ce4 100644
+--- a/src/Standalone/imageeditview.cpp
++++ b/src/Standalone/imageeditview.cpp
+@@ -1185,7 +1185,7 @@ void ImageEditView::pdfDialog()
+         QImage rotateImages[getItemCount()];
+         for(int i=0; i < getItemCount(); i++)
+         {
+-            rotateImages[i] = m_originalImages[i].transformed(QMatrix().rotate(((QGraphicsPixmapItem*)m_orderItem[i])->rotation()));
++            rotateImages[i] = m_originalImages[i].transformed(QTransform().rotate(((QGraphicsPixmapItem*)m_orderItem[i])->rotation()));
+             QSize size = rotateImages[i].size();
+             size.scale(rect.size(), Qt::KeepAspectRatio);
+             painter.setViewport(rect.x(), rect.y(), size.width(), size.height());
+diff --git a/src/Standalone/prefixlineedit.cpp b/src/Standalone/prefixlineedit.cpp
+index 106b438..b27d704 100644
+--- a/src/Standalone/prefixlineedit.cpp
++++ b/src/Standalone/prefixlineedit.cpp
+@@ -1,4 +1,5 @@
+ #include "mainwindow.h"
++#include <QRegularExpression>
+ 
+ PrefixLineedit::PrefixLineedit(QWidget *parent) :
+     QLineEdit(parent),
+@@ -17,8 +18,8 @@ void PrefixLineedit::initialize(std::string default_prefix){
+ QString PrefixLineedit::set_prefix(QString prefix){
+ 
+     //入力制限文字チェック
+-    QRegExp r1("^.*[/:.*?\"<>|].*");
+-    if(r1.exactMatch(prefix) || prefix.indexOf("\\") != -1){
++    QRegularExpression r1(QRegularExpression::anchoredPattern("^.*[/:.*?\"<>|].*"));
++    if(r1.match(prefix).hasMatch() || prefix.indexOf("\\") != -1){
+         BanMessageBox();
+         current_prefix = DEFAULT_PREFIX;
+         this->setText(DEFAULT_PREFIX);
+diff --git a/src/Standalone/previewwindow.cpp b/src/Standalone/previewwindow.cpp
+index fa5480c..41ef738 100644
+--- a/src/Standalone/previewwindow.cpp
++++ b/src/Standalone/previewwindow.cpp
+@@ -72,7 +72,7 @@ void PreviewWindow::initialize(MainWindow* window)
+         m_WidthSizeLabel->setGeometry(m_SizeFrame->width()/2.2 + m_SizeFrame->width()/20 + m_WidthIconImageLabel->width()-10, 10, 80, WidthIconImage.height());
+ 
+         QPalette pal = m_WidthSizeLabel->palette();
+-        pal.setColor(QPalette::Foreground, QColor("#ffffff"));
++        pal.setColor(QPalette::WindowText, QColor("#ffffff"));
+         m_WidthSizeLabel->setPalette(pal);
+         m_WidthSizeLabel->show();
+ 
+diff --git a/src/Standalone/rotateimage.cpp b/src/Standalone/rotateimage.cpp
+index 1c099a5..580eba7 100644
+--- a/src/Standalone/rotateimage.cpp
++++ b/src/Standalone/rotateimage.cpp
+@@ -43,7 +43,7 @@ void RotateImage::Rotate(std::string image_path, int angle, ImageFormat format,
+ 
+     QImage srcImg(image_path.c_str());
+     QPoint center = srcImg.rect().center();
+-    QMatrix matrix;
++    QTransform matrix;
+     matrix.translate(center.x(), center.y());
+     matrix.rotate(angle);
+     QImage dstImg = srcImg.transformed(matrix);

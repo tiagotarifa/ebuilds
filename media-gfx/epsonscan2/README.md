@@ -1,6 +1,6 @@
 # media-gfx/epsonscan2
 
-Epson Scan 2 (6.7.92.0) built from the official Epson source package. It provides:
+Epson Scan 2 (6.7.93.0) built from the official Epson source package. It provides:
 
 - the SANE backend `epsonscan2`, so Epson scanners work with simple-scan, xsane,
   `scanimage` and any other SANE frontend;
@@ -20,13 +20,13 @@ With `-wifi`, everything installed is free software.
 
 ## Installation
 
-1. The source package is fetch-restricted. Download `epsonscan2-6.7.92.0-1.src.tar.gz`
+1. The source package is fetch-restricted. Download `epsonscan2-6.7.93.0-1.src.tar.gz`
    ("Epson Scan 2" → source) from
    <https://support.epson.net/linux/en/epsonscan2.php> with a web browser and copy it
    into your DISTDIR:
 
    ```sh
-   cp epsonscan2-6.7.92.0-1.src.tar.gz "$(portageq distdir)"/
+   cp epsonscan2-6.7.93.0-1.src.tar.gz "$(portageq distdir)"/
    ```
 
 2. Accept the keyword and choose the USE flags:

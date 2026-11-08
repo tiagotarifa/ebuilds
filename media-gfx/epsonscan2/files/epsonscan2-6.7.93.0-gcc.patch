@@ -1,0 +1,39 @@
+Fixes for modern GCC / C++17:
+- replace std::not1/std::ptr_fun (removed in C++17) with lambdas
+- fix CSetterFunc copy constructor referencing a non-existent member
+  (hard error with GCC >= 15, -Wtemplate-body)
+
+diff --git a/src/ES2Command/Src/Utils/ESAccessor.h b/src/ES2Command/Src/Utils/ESAccessor.h
+index 792721c..505462f 100644
+--- a/src/ES2Command/Src/Utils/ESAccessor.h
++++ b/src/ES2Command/Src/Utils/ESAccessor.h
+@@ -187,7 +187,7 @@ protected:
+ 		{
+ 		}
+ 		CSetterFunc(const CSetterFunc& rhs)
+-			: m_func(rhs.func)
++			: m_func(rhs.m_func)
+ 		{
+ 		}
+ 		virtual ISetterFunc* Clone()
+diff --git a/src/ES2Command/Src/Utils/ESUtils.cpp b/src/ES2Command/Src/Utils/ESUtils.cpp
+index e4f5e39..c67fe48 100644
+--- a/src/ES2Command/Src/Utils/ESUtils.cpp
++++ b/src/ES2Command/Src/Utils/ESUtils.cpp
+@@ -167,14 +167,14 @@ ESIndexSet AnyArrayToIndexSet( ESAnyArray& anyArray )
+ // trim from start
+ ESStringA& LTrimSpace(ESStringA& s)
+ {
+-	s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
++	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char c) { return !std::isspace(c); }));
+ 	return s;
+ }
+ 
+ // trim from end
+ ESStringA& RTrimSpace(ESStringA& s)
+ {
+-	s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
++	s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char c) { return !std::isspace(c); }).base(), s.end());
+ 	return s;
+ }
+ 
